@@ -70,14 +70,6 @@
       </logicalStructureType>
    </extension>
    <extension
-         point="org.eclipse.ui.console.consoleFactories">
-      <consoleFactory
-            class="com.dyalog.apldev.debug.core.newconsole.APLDevConsoleFactory"
-            icon="icons/cube.ico"
-            label="APL Dev Console">
-      </consoleFactory>
-   </extension>
-   <extension
          point="org.eclipse.debug.ui.consoleLineTrackers">
       <consoleLineTracker
             class="com.dyalog.apldev.debug.core.console.AplConsoleLineTracker"

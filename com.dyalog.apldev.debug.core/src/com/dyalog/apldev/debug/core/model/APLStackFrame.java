@@ -259,6 +259,9 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 		return -1;
 	}
 
+	/**
+	 * Stack frame label in Debug View
+	 */
 	public String getName() throws DebugException {
 		return fName;
 	}
