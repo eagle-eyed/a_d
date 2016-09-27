@@ -28,20 +28,18 @@ public class PDASourcePathComputerDelegate implements
 	public ISourceContainer[] computeSourceContainers(
 			ILaunchConfiguration configuration, IProgressMonitor monitor)
 			throws CoreException {
-		String path = configuration.getAttribute(APLDebugCorePlugin.ATTR_PDA_PROGRAM,
+
+		String name = configuration.getAttribute(APLDebugCorePlugin.ATTR_PROJECT_NAME,
 				(String) null);
 		ISourceContainer sourceContainer = null;
-		if (path != null) {
-			IResource resource = ResourcesPlugin.getWorkspace().getRoot()
-					.findMember(new Path(path));
-			if (resource != null) {
-				IContainer container = resource.getParent();
-				if (container.getType() == IResource.PROJECT) {
-					sourceContainer = new ProjectSourceContainer((IProject) container, false);
-				} else if (container.getType() == IResource.FOLDER){
-					sourceContainer = new FolderSourceContainer(container, false);
-				}
+		if (name != null) {
+			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(name);
+			if (project != null) {
+				sourceContainer = new ProjectSourceContainer(project, false);
 			}
+//				if (container.getType() == IResource.FOLDER){
+//					sourceContainer = new FolderSourceContainer(container, false);
+//				}
 		}
 		if (sourceContainer == null) {
 			sourceContainer = new WorkspaceSourceContainer();
