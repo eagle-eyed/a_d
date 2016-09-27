@@ -13,6 +13,6 @@ for installing plugins into Eclipse.
 
 
 Installing plugin in eclipse
-* Install eclipse using [installer][https://eclipse.org/] or download any [eclipse package][https://www.eclipse.org/downloads/packages/] package
- or [eclipse SDK][http://download.eclipse.org/eclipse/downloads/]
-* After launching eclipse select menu Help > Install New Software ... and chose location of repository 
+* Install eclipse using [installer][https://eclipse.org/] or download any [eclipse package](https://www.eclipse.org/downloads/packages/) package
+ or [eclipse SDK](http://download.eclipse.org/eclipse/downloads/)
+* After launching eclipse select menu "Help" > "Install New Software.." and in "Work With" field chose location of repository or archive file
