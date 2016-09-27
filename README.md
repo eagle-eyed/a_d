@@ -9,8 +9,8 @@ For building APLDev:
  and run "mvn install" )
 * Clone projects to local repository 
 * For building from projects root folder run "mvn package"
-In project folder "com.dyalog.apldev.update\target\repository\" created files
-for installing plugins into Eclipse.
+Files for for installing plugins into Eclipse placed in "com.dyalog.apldev.update\target\repository\"
+
 
 Installing plugin in eclipse:
 * Install eclipse using [installer](https://eclipse.org/)
