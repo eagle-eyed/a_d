@@ -2,13 +2,13 @@
 ======
 AB ab
 
-To run a APLDeb build you need to:
+To run a APLDev build you need to:
 * Install Java 8
-* Download [maven][http://maven.apache.org/download.html] 
-* Run "mvn install"
+* Install maven (download from [apache.org](http://maven.apache.org/download.html) 
+ and run "mvn install"
 * Clone projects to local repository 
-* And from root run "mvn package"
-In "com.dyalog.apldev.update\target\repository\" created files
+* For building from projects root folder run "mvn package"
+In project folder "com.dyalog.apldev.update\target\repository\" created files
 for installing plugins into Eclipse.
 
 
