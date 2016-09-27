@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            delegate="com.dyalog.apldev.debug.core.launcher.APLLaunchDelegate"
+            id="apl.launchType"
+            modes="run, debug"
+            name="APL Application"
+            public="true"
+            sourceLocatorId="pda.sourceLocator"
+            sourcePathComputerId="pda.sourcePathComputer">
+      </launchConfigurationType>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.sourceLocators">
+      <sourceLocator
+            class="com.dyalog.apldev.debug.core.sourcelookup.APLSourceLookupDirector"
+            id="pda.sourceLocator"
+            name="APL Source Locator">
+      </sourceLocator>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.sourcePathComputers">
+      <sourcePathComputer
+            class="com.dyalog.apldev.debug.core.sourcelookup.PDASourcePathComputerDelegate"
+            id="pda.sourcePathComputer">
+      </sourcePathComputer>
+   </extension>
+   <extension
+         point="org.eclipse.core.variables.valueVariables">
+      <variable
+            description="Path to apl interpreter in the local file system"
+            name="aplExecutable">
+      </variable>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.breakpoints">
+      <breakpoint
+            class="com.dyalog.apldev.debug.core.breakpoints.APLLineBreakpoint"
+            id="pda.lineBreakpoint"
+            markerType="example.debug.core.pda.markerType.lineBreakpoint"
+            name="PDA Line Breakpoints">
+      </breakpoint>
+      <breakpoint
+            class="com.dyalog.apldev.debug.core.breakpoints.APLWatchpoint"
+            id="pda.watchpoint"
+            markerType="example.debug.core.pda.markerType.watchpoint"
+            name="PDA Watchpoint Marker">
+      </breakpoint>
+   </extension>
+   <extension
+         id="example.debug.core.pda.markerType.lineBreakpoint"
+         name="PDA Line Breakpoint"
+         point="org.eclipse.core.resources.markers">
+      <super
+            type="org.eclipse.debug.core.lineBreakpointMarker">
+      </super>
+      <persistent
+            value="true">
+      </persistent>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.logicalStructureTypes">
+      <logicalStructureType
+            class="com.dyalog.apldev.debug.core.model.WordStructureDelegate"
+            id="apl.wordStructure"
+            modelIdentifier="apl.debugModel">
+      </logicalStructureType>
+   </extension>
+   <extension
+         point="org.eclipse.ui.console.consoleFactories">
+      <consoleFactory
+            class="com.dyalog.apldev.debug.core.newconsole.APLDevConsoleFactory"
+            icon="icons/cube.ico"
+            label="APL Dev Console">
+      </consoleFactory>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.consoleLineTrackers">
+      <consoleLineTracker
+            class="com.dyalog.apldev.debug.core.console.AplConsoleLineTracker"
+            id="com.dyalog.APLDev.debug.AplConsoleLineTracker"
+            processType="APLDEV.APL">
+      </consoleLineTracker>
+   </extension>
+
+</plugin>
