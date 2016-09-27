@@ -2,7 +2,7 @@
 ======
 AB ab
 
-To run a APLDev build you need to:
+For building APLDev:
 * Install Java 8
 * Install maven (download from [apache.org](http://maven.apache.org/download.html) 
  and run "mvn install"
