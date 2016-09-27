@@ -5,7 +5,7 @@ AB ab
 For building APLDev:
 * Install Java 8
 * Install maven (download from [apache.org](http://maven.apache.org/download.html) 
- and run "mvn install"
+ and run "mvn install")
 * Clone projects to local repository 
 * For building from projects root folder run "mvn package"
 In project folder "com.dyalog.apldev.update\target\repository\" created files
