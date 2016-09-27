@@ -52,7 +52,7 @@
          point="org.eclipse.debug.ui.debugModelPresentations">
       <debugModelPresentation
             class="com.dyalog.apldev.debug.ui.presentation.APLModelPresentation"
-            id="pda.debugModel">
+            id="apl.debugModel">
       </debugModelPresentation>
    </extension>
    <extension
