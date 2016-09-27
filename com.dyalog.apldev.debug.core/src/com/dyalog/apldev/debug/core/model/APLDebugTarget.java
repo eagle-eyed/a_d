@@ -1105,8 +1105,8 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 	 */
 	public IValue[] getDataStack(int node) throws DebugException {
 		
-//		if(!fWriter.postGetTree(node))
-//			return new IValue[0];
+		if(fWriter == null)
+			return new IValue[0];
 		JSONObject data = new RequestWsTree(fWriter).get(node);
 		if (data == null)
 			return new IValue[0];
