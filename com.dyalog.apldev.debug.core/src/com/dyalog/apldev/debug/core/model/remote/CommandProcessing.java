@@ -8,7 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.core.commands.IStateListener;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.debug.core.DebugException;
 import org.json.JSONArray;
@@ -23,12 +22,10 @@ import com.dyalog.apldev.debug.core.content.Tuple;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
 import com.dyalog.apldev.debug.core.protocol.APLEvent;
 import com.dyalog.apldev.debug.core.protocol.CIPEvent;
-import com.dyalog.apldev.debug.core.protocol.FocusEvent;
 
 public class CommandProcessing implements Runnable {
 	private List<String> cmdQueue = new ArrayList<>();
 	private boolean done;
-//	private Object lock = new Object();
 	Calendar now;
 	private SessionConsole fConsoles;
 	private boolean fInit = true;
@@ -61,6 +58,9 @@ public class CommandProcessing implements Runnable {
 
 	}
 	
+	/**
+	 * 
+	 */
 	public void setOnContentsReceived (ICallback <Object, Tuple<String, String>> onContentsReceived) {
 		this.onContentsReceived = onContentsReceived;
 		if (fInfo != null)
@@ -79,11 +79,9 @@ public class CommandProcessing implements Runnable {
 	 * Add commands from Interpreter for processing
 	 */
 	public void postCommand (String cmd) {
-//		fConsoles.appendReceiveRide(cmd, " queue");
 		synchronized (cmdQueue) {
 			cmdQueue.add(cmd);
 		}
-//		fConsoles.appendReceiveRide(cmd, " post");
 	}
 
 	void parseCommand(String cmd) {
@@ -143,7 +141,17 @@ public class CommandProcessing implements Runnable {
 				fDebugTarget.getInterpreterWriter().postCommand(getLayout.toString());
 				break;
 			case "UpdateDisplayName":
+				if (!fDebugTarget.getStarted()) {
+					// some times after starting Interpreter don't send SetPromptType
+					fDebugTarget.getInterpreterWriter().postCanAcceptInput();
+				}
 				break;
+			case "CanAcceptInput":
+				int canAcceptInput = cmdVal.getInt("canAcceptInput");
+				if (canAcceptInput == 1 && ! fDebugTarget.getStarted()) {
+					new DebugTargetEvent("started");
+					break;
+				}
 			case "ReplyTreeList":
 				processReplyTreeList(cmdVal);
 				break;

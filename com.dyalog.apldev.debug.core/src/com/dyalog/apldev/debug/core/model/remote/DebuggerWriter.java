@@ -341,4 +341,12 @@ public class DebuggerWriter implements Runnable {
 		cmd.put(1, val);
 		postCommand(cmd.toString());
 	}
+
+	public void postCanAcceptInput() {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "CanSessionAcceptInput");
+		cmd.put(1, new JSONObject());
+		postCommand(cmd.toString());
+		
+	}
 }
