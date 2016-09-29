@@ -58,9 +58,6 @@ public class CommandProcessing implements Runnable {
 
 	}
 	
-	/**
-	 * 
-	 */
 	public void setOnContentsReceived (ICallback <Object, Tuple<String, String>> onContentsReceived) {
 		this.onContentsReceived = onContentsReceived;
 		if (fInfo != null)

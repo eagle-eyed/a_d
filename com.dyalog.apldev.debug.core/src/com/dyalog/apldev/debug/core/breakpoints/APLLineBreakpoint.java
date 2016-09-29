@@ -1,17 +1,21 @@
 package com.dyalog.apldev.debug.core.breakpoints;
 
-import java.util.Iterator;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.eclipse.core.internal.resources.File;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ICoreRunnable;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IBreakpoint;
-import org.eclipse.debug.core.model.IThread;
 import org.eclipse.debug.core.model.LineBreakpoint;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,7 +53,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 	/**
 	 * Constructs a line breakpoint on the given resource at the given
 	 * line number. The line number is 1-based (i.e. the first line of a
-	 * file is line number 1). The PDA VM uses 0-based line number,
+	 * file is line number 1). The APL VM uses 0-based line number,
 	 * so this line number translation is done at breakpoint install time.
 	 * 
 	 * @param resource file on which to set the breakpoint
@@ -58,7 +62,8 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 	 */
 	public APLLineBreakpoint(final IResource resource, final int lineNumber)
 			throws CoreException {
-		IWorkspaceRunnable runnable = new IWorkspaceRunnable() {
+		ICoreRunnable runnable = new ICoreRunnable() {
+			@Override
 			public void run(IProgressMonitor monitor) throws CoreException {
 				IMarker marker = resource.createMarker(
 						"example.debug.core.pda.markerType.lineBreakpoint");
@@ -70,7 +75,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 						+ " [line: " + lineNumber + "]");
 			}
 		};
-		run(getMarkerRule(resource), runnable);
+		run(getMarkerRule(resource), (IWorkspaceRunnable) runnable);
 		this.lineNumber = lineNumber;
 //		name = ;
 	}
@@ -93,7 +98,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 	 * Registers this breakpoint as an event listener in the
 	 * given target and creates the breakpoint specific request.
 	 * 
-	 * @param target PDA interpreter
+	 * @param target debug target for APL interpreter
 	 * @throws CoreException if installation fails
 	 */
 	public void install(APLDebugTarget debugTarget) throws CoreException {
@@ -106,217 +111,158 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 	 * Create the breakpoint specific request in the target. Subclasses
 	 * should override.
 	 * 
-	 * @param target PDA interpreter
+	 * @param target debug target for Interpreter
 	 * @throws CoreException if request creation fails
 	 */
-	protected void createRequest(APLDebugTarget target) throws CoreException {
+	protected synchronized void createRequest(APLDebugTarget target) throws CoreException {
 		IResource resource = getMarker().getResource();
-		String name = resource.getName();
+		String resName = resource.getName();
+		final String[] text;
 		if (resource instanceof IFile) {
 			int extLen = resource.getFileExtension().length();
 			if (extLen > 0)
 				extLen ++;
-			name = name.substring(0, name.length() - extLen);
+			resName = resName.substring(0, resName.length() - extLen);
+			// read file content
+			text = ReadFile((IFile) resource);
+		} else {
+			text = new String[0];
 		}
-		
+		final String name = resName;
 		// Check if function already opened by interpreter
 		EntityWindowsStack entityWins = target.getEntityWindows();
 		EntityWindow entityWin = entityWins.getEntity(name);
-		if (entityWin == null) {
-			entityWin = entityWins.getDebugEntity(name);
-		}
-		if (entityWin == null) {
-			// Open function
-			JSONArray cmd = new JSONArray();
-			cmd.put(0, "Edit");
-			JSONObject val = new JSONObject();
-			val.put("win", 0);
-			val.put("pos", 0);
-			val.put("text", name);
-			val.put("unsaved", new JSONObject());
-			cmd.put(1, val);
-			JSONArray ans = new ReplyRequest(target).get(cmd);
-			if (ans == null) {
-				// can't open entity window
-				return;
-			}
-			try {
-				JSONObject ansVal = ans.getJSONObject(1);
-				String ansCmd = ans.getString(0);
-				if (ansCmd.equals("OpenWindow") || ansCmd.equals("UpdateWindow")) {
-					// Set breakpoints using SaveChanges
-					int win = ansVal.getInt("token");
-					// get entity window from hash table
-					entityWin = target.getEntityWindows().getEntity(win);
-					installBreakpoint(target, entityWin, getLineNumber() - 1);
-					
-					// Close opened window
-					cmd = new JSONArray();
-					cmd.put(0, "CloseWindow");
-					val = new JSONObject();
-					val.put("win", entityWin.token);
-					cmd.put(1, val);
-					ans = new ReplyRequest(target).get(cmd);
-//					if (ans != null) {
-//						ansVal = ans.getJSONObject(1);
-//						int replyWin = ansVal.getInt("win");
-//						// Check if window closed correctly
-//						if (win != replyWin) {
-//
-//						}
-//					}
-				} else if (ansCmd.equals("GotoWindow")) {
-					// interpreter window opened, but not stored in map "name - win id"
-					int win = ansVal.getInt("win");
-					System.out.println("Set line breakpoint: can't obtain win id \""+ win +
-							"\" id by entity \"" + name + "\"");
-					entityWin = target.getEntityWindows().getEntity(win);
-					installBreakpoint(target, entityWin, getLineNumber() -1);
-				}
-			} catch (JSONException e) {
-				
+		if (entityWin != null) {
+			if (entityWin.addStop(getLineNumber() - 1)) {
+				setBreakpointList(target, entityWin, text);
 			}
 		} else {
-			installBreakpoint(target, entityWin, getLineNumber() - 1);
-		}
-	}
-	
-	private void installBreakpoint(APLDebugTarget target, EntityWindow entityWin, int line) {
-		if (entityWin == null || target == null)
-			return;
-		// Check if line breakpoint already present
-		if (entityWin.addStop(line)) {
-			if (entityWin.getDebugger()) {
-				// Set using SetLineAttributes
-					JSONArray cmd = new JSONArray();
-					cmd.put(0, "SetLineAttributes");
-					JSONObject val = new JSONObject();
-					val.put("win", entityWin.token);
-					val.put("nLines", entityWin.getTextAsArray().length);
-					val.put("stop", entityWin.getStop());
-					val.put("trace", new int[0]);
-					val.put("monitor", new int[0]);
-					cmd.put(1, val);
-					target.getInterpreterWriter().postCommand(cmd.toString());
+			entityWin = entityWins.getEntity(name);
+			if (entityWin != null) {
+				if (entityWin.addStop(getLineNumber() - 1)) {
+					setBreakpointList(target, entityWin, text);
+				}
 			} else {
-				JSONArray cmdSave = new JSONArray();
-				cmdSave.put(0, "SaveChanges");
-				JSONObject valSave = new JSONObject();
-				valSave.put("win", entityWin.token);
-				valSave.put("text", entityWin.getTextAsArray());
-				valSave.put("stop", entityWin.getStop());
-				cmdSave.put(1, valSave);
-				JSONArray ans = new ReplyRequest(target).get(cmdSave);
-				if (ans != null) {
-					try {
-//						JSONObject ansVal = ans.getJSONObject(1);
-//						int err = ansVal.getInt("err");
-						// TODO Check if saved correctly
-					} catch (JSONException e) {
+				// open window with function
+				lineNumber = getLineNumber();
+				Runnable addBPonOpen = new Runnable() {
+					@Override
+					public void run() {
+						EntityWindow entity = entityWins.getEntity(name);
+						if (entity == null) {
+							entity = entityWins.getDebugEntity(name);
+						}
+						if (entity != null && entity.addStop(lineNumber - 1)) {
+							setBreakpointList(target, entity, text);
+						}
 						
 					}
-				}
+				};
+				entityWins.addOnOpenActionWithClose(name, addBPonOpen); 
+
+				JSONArray cmd = new JSONArray();
+				cmd.put(0, "Edit");
+				JSONObject val = new JSONObject();
+				val.put("win", 0);
+				val.put("pos", 0);
+				val.put("text", name);
+				val.put("unsaved", new JSONObject());
+				cmd.put(1, val);
+//				JSONArray ans = new ReplyRequest(target).get(cmd);
+				target.getInterpreterWriter().postCommand(cmd.toString());
 			}
 		}
 	}
 	
+	private String[] ReadFile(IFile file) throws CoreException {
+		try {
+			List <String> fileText = new ArrayList <String>();
+			InputStream in;
+			in = file.getContents();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+			String line;
+			while ((line = reader.readLine()) != null) {
+				fileText.add(line);
+			}
+			String[] text = new String[fileText.size()];
+			fileText.toArray(text);
+			return text;
+		} catch (IOException e) {
+			APLDebugCorePlugin.log(e);
+			return null;
+		}
+	}
+
 	/**
 	 * Removes this breakpoint's event request from the target. Subclasses
 	 * should override.
 	 * 
-	 * @param target PDA interpreter
+	 * @param target APL interpreter
 	 * @throws CoreException if clearing the request fails
 	 */
-	protected void clearRequest(APLDebugTarget target) throws CoreException {
+	protected synchronized void clearRequest(APLDebugTarget target) throws CoreException {
 		IResource resource = getMarker().getResource();
-		String name = resource.getName();
+		String resName = resource.getName();
+		final String[] text;
 		if (resource instanceof IFile) {
 			int extLen = resource.getFileExtension().length();
 			if (extLen > 0)
 				extLen ++;
-			name = name.substring(0, name.length() - extLen);
+			resName = resName.substring(0, resName.length() - extLen);
+			// read file content
+			text = ReadFile((IFile) resource);
+		} else {
+			text = new String[0];
 		}
+		final String name = resName;
+		
 		// Check if function already opened by interpreter
 		EntityWindowsStack entityWins = target.getEntityWindows();
-		EntityWindow entityWin = entityWins.getEntity(name);
-		if (entityWin == null) {
-			entityWin = entityWins.getDebugEntity(name);
-		}
-		
-		if (entityWin == null) {
-			// Open function
-			JSONArray cmd = new JSONArray();
-			cmd.put(0, "Edit");
-			JSONObject val = new JSONObject();
-			val.put("win", 0);
-			val.put("pos", 0);
-			val.put("text", name);
-			val.put("unsaved", new JSONObject());
-			cmd.put(1, val);
-			JSONArray ans = new ReplyRequest(target).get(cmd);
-			if (ans != null) {
-				try {
-					JSONObject ansVal = ans.getJSONObject(1);
-					String ansCmd = ans.getString(0);
-					if (!ansCmd.equals("GotoWindow")) {
-						// set line breakpoint using "SaveChanges"
-						int win = ansVal.getInt("token");
-						entityWin = target.getEntityWindows().getEntity(win);
-						if (entityWin != null && entityWin.removeStop(getLineNumber() - 1)) {
-							cmd = new JSONArray();
-							cmd.put(0, "SaveChanges");
-							val = new JSONObject();
-							val.put("win", entityWin.token);
-							val.put("text", entityWin.getTextAsArray());
-							val.put("stop", entityWin.getStop());
-							cmd.put(1, val);
-							ans = new ReplyRequest(target).get(cmd);
-							if (ans != null) {
-								try {
-									ansVal = ans.getJSONObject(1);
-									int err = ansVal.getInt("err");
-									// TODO Check if saved correctly, else don't remove line breakpoint
-								} catch (JSONException e) {
-									
-								}
-							}
-							// Close opened window
-							cmd = new JSONArray();
-							cmd.put(0, "CloseWindow");
-							val = new JSONObject();
-							val.put("win", 1);
-							cmd.put(1, val);
-							ans = new ReplyRequest(target).get(cmd);
-							if (ans != null) {
-								// Check if window closed correctly
-								ansVal = ans.getJSONObject(1);
-								int replyWin = ansVal.getInt("win");
-								if (win == replyWin) {
-									// TODO Handle closed window
-								}
-							}
-						}
-					} else {
-						// interpreter window opened, but not stored in map "name - win id"
-						int win = ansVal.getInt("win");
-						System.out.println("Remove line breakpoint: can't obtain win id \""+ win +
-								"\" id by entity \"" + name + "\"");
-						entityWin = target.getEntityWindows().getEntity(win);
-						if (entityWin != null) {
-							removeBreakpoint(target, entityWin, getLineNumber() - 1);
-						}
-					}
-				} catch (JSONException e) {
-
-				}
+		EntityWindow entityWin = entityWins.getDebugEntity(name);
+		if (entityWin != null) {
+			if (entityWin.removeStop(getLineNumber() - 1)) {
+				setBreakpointList(target, entityWin, text);
 			}
 		} else {
-			removeBreakpoint(target, entityWin, getLineNumber() - 1);
+			entityWin = entityWins.getEntity(name);
+			if (entityWin != null) {
+				if (entityWin.removeStop(getLineNumber() - 1)) {
+					setBreakpointList(target, entityWin, text);
+				}
+			} else {
+				// open window with function
+				lineNumber = getLineNumber();
+				Runnable removeBPonOpen = new Runnable() {
+					@Override
+					public void run() {
+						EntityWindow entity = entityWins.getEntity(name);
+						if (entity == null) {
+							entity = entityWins.getDebugEntity(name);
+						}
+						if (entity != null && entity.removeStop(lineNumber - 1)) {
+							setBreakpointList(target, entity, text);
+						}
+						
+					}
+				};
+				entityWins.addOnOpenActionWithClose(name, removeBPonOpen); 
+
+				JSONArray cmd = new JSONArray();
+				cmd.put(0, "Edit");
+				JSONObject val = new JSONObject();
+				val.put("win", 0);
+				val.put("pos", 0);
+				val.put("text", name);
+				val.put("unsaved", new JSONObject());
+				cmd.put(1, val);
+//				JSONArray ans = new ReplyRequest(target).get(cmd);
+				target.getInterpreterWriter().postCommand(cmd.toString());
+			}
 		}
 	}
 	
-	private void removeBreakpoint(APLDebugTarget target, EntityWindow entityWin, int line) {
-		if (entityWin.removeStop(line)) {
+	private void setBreakpointList(APLDebugTarget target, EntityWindow entityWin, String[] text) {
+		if (target != null && entityWin != null) {
 			if (entityWin.getDebugger()) {
 				// interpreter open debugger window
 				JSONArray cmdSet = new JSONArray();
@@ -330,33 +276,25 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 				cmdSet.put(1, valSet);
 				target.getInterpreterWriter().postCommand(cmdSet.toString());
 			} else {
-				JSONArray cmdSave = new JSONArray();
-				JSONObject valSave = new JSONObject();
-				cmdSave.put(0,"SaveChanges");
-				valSave.put("win", entityWin.token);
-				valSave.put("text", entityWin.getTextAsArray());
-				valSave.put("stop", entityWin.getStop());
-				cmdSave.put(1, valSave);
-				JSONArray ans = new ReplyRequest(target).get(cmdSave);
-				if (ans != null) {
-					try {
-//						JSONObject ansVal = ans.getJSONObject(1);
-//						int err = ansVal.getInt("err");
-						// TODO if error don't remove line breakpoint
-					} catch (JSONException e) {
-						
-					}
-				}
+//				JSONArray cmdSave = new JSONArray();
+//				JSONObject valSave = new JSONObject();
+//				cmdSave.put(0,"SaveChanges");
+//				valSave.put("win", entityWin.token);
+//				valSave.put("text", entityWin.getTextAsArray());
+//				valSave.put("stop", entityWin.getStop());
+//				cmdSave.put(1, valSave);
+	//			JSONArray ans = new ReplyRequest(target).get(cmdSave);
+				target.getInterpreterWriter().postSave(entityWin.token, text, entityWin.getStop());
 			}
 		}
 	}
-
+	
 	/**
 	 * Removes this breakpoint from the given interpreter.
 	 * Removes this breakpoint as an event listener and clears
 	 * the request for the interpreter.
 	 * 
-	 * @param target PDA interpreter
+	 * @param target APL interpreter
 	 * @throws CoreException if removal fails
 	 */
 	public void remove(APLDebugTarget target) throws CoreException {

@@ -695,8 +695,8 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 			try {
 				if ((breakpoint.isEnabled() && getBreakpointManager().isEnabled())
 						|| !breakpoint.isRegistered()) {
-					APLLineBreakpoint pdaBreakpoint = (APLLineBreakpoint) breakpoint;
-					pdaBreakpoint.install(this);
+					APLLineBreakpoint aplBreakpoint = (APLLineBreakpoint) breakpoint;
+					aplBreakpoint.install(this);
 				}
 			} catch (CoreException e) {
 				
@@ -955,77 +955,90 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 	/**
 	 * Load text into interpreter workspace
 	 */
-	public boolean loadToWorkspace(String[] text, String name) {
+	public boolean loadToWorkspace(final String[] text, String name) {
 		if (name == null || name.length() == 0)
 			return false;
-		if (text == null)
-			text = new String[0];
-		// open window
-		JSONArray cmd = new JSONArray();
-		cmd.put(0, "Edit");
-		JSONObject val = new JSONObject();
-		int tokenId = 0;
-		val.put("win", tokenId);
-		val.put("pos", 0);
-		val.put("text", name);
-		val.put("unsaved", new JSONObject());
-		cmd.put(1, val);
-		JSONArray ans = new ReplyRequest(getDebugTarget()).get(cmd);
-		JSONObject ansVal;
-		String tname = null;
-		if (ans != null) {
-			int win = 0;
-			try {
-				String ansCmd = ans.getString(0);
-				ansVal = ans.getJSONObject(1);
-				if (ansCmd.equals("GotoWindow")) {
-					win = ansVal.getInt("win");
-				} else if (ansCmd.equals("OpenWindow")) {
-					win = ansVal.getInt("token");
-				} else {
-					// incorrect answer
-					return false;
+		// Check if function window already opened
+		EntityWindowsStack entityWins = getEntityWindows();
+		EntityWindow entityWin = entityWins.getEntity(name);
+		if (entityWin != null) {
+			getInterpreterWriter().postSave(entityWin.token, text, entityWin.getStop());
+		} else {
+			Runnable saveOnOpen = new Runnable() {
+				@Override
+				public void run() {
+					EntityWindow entity = entityWins.getEntity(name);
+					getInterpreterWriter().postSave(entity.token, text, entity.getStop());
 				}
-			} catch (JSONException e) {
-				
-			}
-			if (win != 0) {
-				cmd = new JSONArray();
-				cmd.put(0, "SaveChanges");
-				val = new JSONObject();
-				val.put("win", win);
-				val.put("text", text);
-				val.put("stop", new int[0]);
-				cmd.put(1, val);
-				ans = new ReplyRequest(getDebugTarget()).get(cmd);
-				if (ans != null) {
-					try {
-						ansVal = ans.getJSONObject(1);
-						int err = ansVal.getInt("err");
-						int savedWin = ansVal.getInt("win");
-						if (err != 0) {
-							// TODO When err not empty
-						}
-						if (savedWin != win) {
-							// TODO When reply save changes to another win
-						}
-					} catch (JSONException e) {
-						
-					}
-				}
-				cmd = new JSONArray();
-				cmd.put(0, "CloseWindow");
-				val = new JSONObject();
-				val.put("win", win);
-				cmd.put(1,val);
-				ans = new ReplyRequest(getDebugTarget()).get(cmd);
-				if (ans != null && (!"CloseWindow".equals(ans.getString(0))
-						|| ans.getJSONObject(1).getInt("win") != win)) {
-					// TODO Wrong reply CloseWindow
-				}
-			} else
-				return false;
+			};
+			entityWins.addOnOpenActionWithClose(name, saveOnOpen);
 		}
+//		// open window
+//		JSONArray cmd = new JSONArray();
+//		cmd.put(0, "Edit");
+//		JSONObject val = new JSONObject();
+//		int tokenId = 0;
+//		val.put("win", tokenId);
+//		val.put("pos", 0);
+//		val.put("text", name);
+//		val.put("unsaved", new JSONObject());
+//		cmd.put(1, val);
+//		JSONArray ans = new ReplyRequest(getDebugTarget()).get(cmd);
+//		JSONObject ansVal;
+//		String tname = null;
+//		if (ans != null) {
+//			int win = 0;
+//			try {
+//				String ansCmd = ans.getString(0);
+//				ansVal = ans.getJSONObject(1);
+//				if (ansCmd.equals("GotoWindow")) {
+//					win = ansVal.getInt("win");
+//				} else if (ansCmd.equals("OpenWindow")) {
+//					win = ansVal.getInt("token");
+//				} else {
+//					// incorrect answer
+//					return false;
+//				}
+//			} catch (JSONException e) {
+//				
+//			}
+//			if (win != 0) {
+//				cmd = new JSONArray();
+//				cmd.put(0, "SaveChanges");
+//				val = new JSONObject();
+//				val.put("win", win);
+//				val.put("text", text);
+//				val.put("stop", new int[0]);
+//				cmd.put(1, val);
+//				ans = new ReplyRequest(getDebugTarget()).get(cmd);
+//				if (ans != null) {
+//					try {
+//						ansVal = ans.getJSONObject(1);
+//						int err = ansVal.getInt("err");
+//						int savedWin = ansVal.getInt("win");
+//						if (err != 0) {
+//							// TODO When err not empty
+//						}
+//						if (savedWin != win) {
+//							// TODO When reply save changes to another win
+//						}
+//					} catch (JSONException e) {
+//						
+//					}
+//				}
+//				cmd = new JSONArray();
+//				cmd.put(0, "CloseWindow");
+//				val = new JSONObject();
+//				val.put("win", win);
+//				cmd.put(1,val);
+//				ans = new ReplyRequest(getDebugTarget()).get(cmd);
+//				if (ans != null && (!"CloseWindow".equals(ans.getString(0))
+//						|| ans.getJSONObject(1).getInt("win") != win)) {
+//					// TODO Wrong reply CloseWindow
+//				}
+//			} else
+//				return false;
+//		}
 		return true;
 	}
 
@@ -1382,10 +1395,13 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 	public void breakpointManagerEnablementChanged(boolean enabled) {
 		IBreakpoint[] breakpoints = getBreakpointManager().getBreakpoints(getModelIdentifier());
 		for (int i = 0; i < breakpoints.length; i++) {
-			if (enabled) {
-				breakpointAdded(breakpoints[i]);
-			} else {
-				breakpointRemoved(breakpoints[i], null);
+			if (breakpoints[i] instanceof APLLineBreakpoint) {
+//				APLLineBreakpoint breakpoint =  (APLLineBreakpoint) breakpoints[i];
+				if (enabled) {
+					breakpointAdded(breakpoints[i]);
+				} else {
+					breakpointRemoved(breakpoints[i], null);
+				}
 			}
 		}
 	}
@@ -1456,7 +1472,6 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 					}
 				}
 				if (resource != null) {
-					// TODO check if file from project
 					if (fProject.equals(resource.getProject())) {
 						return true;
 					}

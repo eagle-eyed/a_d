@@ -332,6 +332,18 @@ public class DebuggerWriter implements Runnable {
 		}
 	}
 
+	/**
+	 * Close entity window
+	 */
+	public void postCloseWindow(int win) {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "CloseWindow");
+		JSONObject val = new JSONObject();
+		val.put("win", win);
+		cmd.put(1, val);
+		postCommand(cmd.toString());
+	}
+	
 	public void postTerminate() {
 		JSONArray cmd = new JSONArray();
 		cmd.put(0, "Execute");
@@ -347,6 +359,23 @@ public class DebuggerWriter implements Runnable {
 		cmd.put(0, "CanSessionAcceptInput");
 		cmd.put(1, new JSONObject());
 		postCommand(cmd.toString());
-		
+	}
+	
+	public void postGetSIStack() {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "GetSIStack");
+		cmd.put(1, new JSONObject());
+		postCommand(cmd.toString());
+	}
+
+	public void postSave(int token, String[] text, int[] stop) {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "SaveChanges");
+		JSONObject val = new JSONObject();
+		val.put("win", token);
+		val.put("text", text);
+		val.put("stop", stop);
+		cmd.put(1, val);
+		postCommand(cmd.toString());
 	}
 }

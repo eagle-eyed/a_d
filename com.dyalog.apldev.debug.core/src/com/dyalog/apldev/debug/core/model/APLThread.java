@@ -353,8 +353,8 @@ public class APLThread extends APLDebugElement implements IThread,
 	
 	@Override
 	public boolean canTerminate() {
-		if (fThreadId == 0)
-			return false;
+//		if (fThreadId == 0)
+//			return false;
 		return !isTerminated();
 	}
 
@@ -365,7 +365,9 @@ public class APLThread extends APLDebugElement implements IThread,
 
 	@Override
 	public void terminate() throws DebugException {
-		if (fThreadId != 0) {
+		if (fThreadId == 0) {
+			getDebugTarget().terminate();
+		} else {
 //			sendRequest("terminate thread " + fThreadId);
 		}
 		
