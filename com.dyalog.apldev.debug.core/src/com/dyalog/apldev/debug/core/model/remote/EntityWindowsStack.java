@@ -3,6 +3,7 @@ package com.dyalog.apldev.debug.core.model.remote;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
 import com.dyalog.apldev.debug.core.model.APLThread;
@@ -67,9 +68,9 @@ public class EntityWindowsStack {
 					if (thread.getIdentifier() != 0)
 						thread.setTerminate();
 
-					if (checkStackFrame)
-						debugTarget.getInterpreterWriter()
-								.postCommand("[\"GetSIStack\",{}]");
+//					if (checkStackFrame)
+//						debugTarget.getInterpreterWriter()
+//								.postGetSIStack();
 						
 				}
 			}
