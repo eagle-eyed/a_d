@@ -57,6 +57,10 @@ public class EntityWindow {
 		return tid;
 	}
 
+	public String getName() {
+		return name;
+	}
+	
 	public String getThreadName() {
 		return tname;
 	}
