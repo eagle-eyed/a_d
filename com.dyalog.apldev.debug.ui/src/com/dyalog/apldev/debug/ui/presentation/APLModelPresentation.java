@@ -35,18 +35,27 @@ public class APLModelPresentation extends LabelProvider implements
 			
 			switch (((APLDataStackValue) element).getType()) {
 			case -1:
+				// invalid name
 				return imageCache.get("greendot.gif");
 			case 0:
+				// unused name
 				return imageCache.get("greendot_big.gif");
 			case 1:
+				// label
 				return imageCache.get("label_1.gif");
 			case 2:
-				return imageCache.get("WSE/variable_tab.gif");
+				// variable
+//				return imageCache.get("WSE/variable_tab.gif");
+				return imageCache.get("greendot.gif");
 			case 3:
-				return imageCache.get("WSE/func.gif");
+				// function
+//				return imageCache.get("WSE/func.gif");
+				return imageCache.get("greendot_big.gif");
 			case 4:
+				// operator
 				return imageCache.get("op1.gif");
 			case 9:
+				// object
 				return imageCache.get("WSE/class_obj.gif");
 			}
 			return imageRegistry.getDescriptor(APLDebugUIPlugin.IMG_VAR).createImage();
