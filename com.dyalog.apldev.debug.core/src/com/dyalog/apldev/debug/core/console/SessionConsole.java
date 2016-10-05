@@ -89,15 +89,18 @@ public class SessionConsole {
 		// Create console for RIDE protocol
 		ImageDescriptor descR = getImageDesc("icons/cubeR.ico");
 		String name = target.getName();
-		fConsoleRIDE = createConsole("RIDE: " + name, descR);
-		foutRIDE = fConsoleRIDE.newOutputStream();
-		finRIDE = fConsoleRIDE.getInputStream();
-		fConsoleRIDEWriter = new PrintWriter(new OutputStreamWriter(foutRIDE, StandardCharsets.UTF_8));
-
-		fConsoleRIDEWriter.println("RIDE started: " + date);
-		fConsoleRIDEWriter.flush();
-		addRIDEConsoleInputListener();
-
+		boolean enableRIDEConsole = false;
+		if (enableRIDEConsole) {
+			fConsoleRIDE = createConsole("RIDE: " + name, descR);
+			foutRIDE = fConsoleRIDE.newOutputStream();
+			finRIDE = fConsoleRIDE.getInputStream();
+			fConsoleRIDEWriter = new PrintWriter(new OutputStreamWriter(foutRIDE, StandardCharsets.UTF_8));
+	
+			fConsoleRIDEWriter.println("RIDE started: " + date);
+			fConsoleRIDEWriter.flush();
+			addRIDEConsoleInputListener();
+		}
+		
 		// Create session console
 		AplDevConsoleInterpreter consoleInterpreter = new AplDevConsoleInterpreter(fTarget);
 		fTarget.setConsoleInterpter(consoleInterpreter);
@@ -110,34 +113,25 @@ public class SessionConsole {
 	}
 	
 	public void close() {
-		// Stop Dispatch Job
-		if (fConsoleSessionReadJob != null)
-			fConsoleSessionReadJob.stop();
-		if (fConsoleRIDEReadJob != null)
-			fConsoleRIDEReadJob.stop();
+		if ( ! isTerminated()) {
+			terminate();
+		}
+//		// Stop Dispatch Job
+//		if (fConsoleSessionReadJob != null)
+//			fConsoleSessionReadJob.stop();
+//		if (fConsoleRIDEReadJob != null)
+//			fConsoleRIDEReadJob.stop();
 		// console consoles
-//		try {
 		if (fConsolesOpened) {
 			fConsolesOpened = false;
-//			finSession.close();
-//			foutSession.close();
-//			
-//			finRIDE.close();
-//			foutRIDE.close();
-//		    fConsoleSession.streamClosed(foutSession);
 
 			fConManager.removeConsoles(new IConsole[]
 					{fConsoleSession, fConsoleRIDE});
-			fAplDevConsole.terminate();
+//			fAplDevConsole.terminate();
 			fConManager.removeConsoles(new IConsole[] {fAplDevConsole});
 		}
-//	} catch (IOException e) {
-//		DebugCorePlugin.getDefault().getLog().log(
-//	            new Status (IStatus.ERROR, DebugCorePlugin.PLUGIN_ID,
-//	            		"Error closing consoles", e));
-//	}
-
 	}
+	
 	private IOConsole createConsole(String name, ImageDescriptor desc){
 		ConsolePlugin plugin = ConsolePlugin.getDefault();
 		IConsoleManager conMan = plugin.getConsoleManager();
@@ -168,8 +162,12 @@ public class SessionConsole {
 	public void terminate() {
 		if (fTerminated)
 			return;
-		removeRIDEConsoleInputListener();
 		fTerminated = true;
+		if (fConsoleRIDE != null) {
+			removeRIDEConsoleInputListener();
+			fConsoleRIDE.getName();
+		}
+		fAplDevConsole.terminate();
 	}
 	
 	/**

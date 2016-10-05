@@ -60,7 +60,15 @@ public abstract class ScriptConsole extends TextConsole implements ICommandHandl
 		if (history != null)
 			history.close();
 		history = null;
+		Runnable runnable = new Runnable() {
 
+			@Override
+			public void run() {
+				setName("<terminated> " + getName());
+			}
+			
+		};
+		RunInUiThread.sync(runnable);
 //		ColorManager colMan = ColorManager.getDefault();
 //		colMan.dispose();
 	}
