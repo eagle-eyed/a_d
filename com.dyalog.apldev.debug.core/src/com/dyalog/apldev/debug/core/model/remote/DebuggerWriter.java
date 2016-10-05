@@ -40,18 +40,16 @@ public class DebuggerWriter implements Runnable {
 	 * Send session prompt
 	 */
 	public void postSessionPrompt(String prompt) {
-		try {
-			JSONArray cmd = new JSONArray();
-			cmd.put(0,"Execute");
-			JSONObject val = new JSONObject();
-			val.put("text", (String) prompt + "\n");
-			val.put("trace", (int) 0);
-			cmd.put(1, val);
-			postCommand(cmd.toString());
-		} catch (JSONException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Error parsing to JSON: " + prompt, e);
-		}
-	}
+		JSONArray cmd = new JSONArray();
+		cmd.put(0,"Execute");
+		JSONObject val = new JSONObject();
+		val.put("text", (String) prompt + "\n");
+		val.put("trace", (int) 0);
+		cmd.put(1, val);
+		postCommand(cmd.toString());
+		
+		fDebugTarget.promptChanged();
+}
 	
 	/**
 	 * Read node for Workspace Explorer
@@ -221,6 +219,7 @@ public class DebuggerWriter implements Runnable {
 			try {
 				if (replyRequest != null)
 					fDebugTarget.getCommandProc().setReplyHandler(replyRequest);
+
 				fRequestWriter.write(prefix);
 				fRequestWriter.write(payload);
 				fRequestWriter.flush();
@@ -317,25 +316,30 @@ public class DebuggerWriter implements Runnable {
 	 * @param text line with entity
 	 */
 	public void postEdit(int win, int pos, String text) {
-		try {
-			JSONArray cmd = new JSONArray();
-			cmd.put(0, "Edit");
-			JSONObject val = new JSONObject();
-			val.put("win", win);
-			val.put("text", text);
-			val.put("pos", pos);
-			val.put("unsaved", new JSONObject());
-			cmd.put(1, val);
-			postCommand(cmd.toString());
-		} catch (JSONException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Error parsing to JSON: postEdit (" + win +", "+ pos + ", "+ text + ")", e);
+		if (win == 0 && pos == 0
+				&& fDebugTarget.getEntityWindows().isOpening(text)) {
+			// Request for opening already send
+			return;
 		}
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "Edit");
+		JSONObject val = new JSONObject();
+		val.put("win", win);
+		val.put("text", text);
+		val.put("pos", pos);
+		val.put("unsaved", new JSONObject());
+		cmd.put(1, val);
+		postCommand(cmd.toString());
 	}
 
 	/**
 	 * Close entity window
 	 */
 	public void postCloseWindow(int win) {
+		EntityWindow entityWin = fDebugTarget.getEntityWindows().getEntity(win);
+		if (entityWin != null) {
+			entityWin.setClosed();
+		}
 		JSONArray cmd = new JSONArray();
 		cmd.put(0, "CloseWindow");
 		JSONObject val = new JSONObject();
@@ -375,6 +379,54 @@ public class DebuggerWriter implements Runnable {
 		val.put("win", token);
 		val.put("text", text);
 		val.put("stop", stop);
+		cmd.put(1, val);
+		postCommand(cmd.toString());
+	}
+
+	public void postCutback(int token) {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "Cutback");
+		JSONObject val = new JSONObject();
+		val.put("win", token);
+		cmd.put(1, val);
+		postCommand(cmd.toString());
+	}
+
+	public void postStepReturn(int token) {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "ContinueTrace");
+		JSONObject val = new JSONObject();
+		val.put("win", token);
+		cmd.put(1, val);
+		postCommand(cmd.toString());
+	}
+
+	public void postStepOver(int token) {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "RunCurrentLine");
+		JSONObject val = new JSONObject();
+		val.put("win", token);
+		cmd.put(1, val);
+		postCommand(cmd.toString());
+	}
+
+	public void postStepInto(int token) {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "StepInto");
+		JSONObject val = new JSONObject();
+		val.put("win", token);
+		cmd.put(1, val);
+		postCommand(cmd.toString());
+	}
+
+	public void postEdit(int win, int pos, String name, String[] strings) {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "Edit");
+		JSONObject val = new JSONObject();
+		val.put("win", 0);
+		val.put("pos", 0);
+		val.put("text", name);
+		val.put("unsaved", new JSONObject());
 		cmd.put(1, val);
 		postCommand(cmd.toString());
 	}
