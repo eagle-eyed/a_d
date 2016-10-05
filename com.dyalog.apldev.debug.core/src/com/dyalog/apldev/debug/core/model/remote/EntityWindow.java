@@ -1,7 +1,5 @@
 package com.dyalog.apldev.debug.core.model.remote;
 
-import java.util.Collection;
-
 /**
  * APL entity window 
  */
@@ -35,6 +33,7 @@ public class EntityWindow {
 	public final int token;
 	private int lineNum;
 	private Object lock = new Object();
+	private boolean fClosed;
 	
 
 	public EntityWindow(int currentRow, boolean debugger, int entityType, String name, int offset, boolean readOnly,
@@ -155,7 +154,7 @@ public class EntityWindow {
 		this.lineNum = lineNum;
 	}
 
-	public boolean getDebugger() {
+	public boolean isDebug() {
 		return debugger;
 	}
 
@@ -173,4 +172,16 @@ public class EntityWindow {
 		}
 		return source;
 	}
+	
+	public void setClosed() {
+		fClosed = true;
+	}
+	
+	/**
+	 * Return if was send close window command and entity could not be actual
+	 */
+	public boolean isClosed() {
+		return fClosed;
+	}
+
 }

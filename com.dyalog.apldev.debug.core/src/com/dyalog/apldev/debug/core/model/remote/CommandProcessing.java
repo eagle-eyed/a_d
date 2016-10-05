@@ -24,6 +24,7 @@ import com.dyalog.apldev.debug.core.protocol.APLEvent;
 import com.dyalog.apldev.debug.core.protocol.CIPEvent;
 
 public class CommandProcessing implements Runnable {
+	
 	private List<String> cmdQueue = new ArrayList<>();
 	private boolean done;
 	Calendar now;
@@ -36,6 +37,11 @@ public class CommandProcessing implements Runnable {
 	ICallback <Object, String> onEchoInput;
 	private String fInfo;
 	public static final String EMPTY = "";
+	/**
+	 * List with action after receiving stack frame data
+	 */
+	private Map <Integer, Runnable[]> fOnReceiveStackAction = Collections.synchronizedMap(
+			new LinkedHashMap <Integer, Runnable[]> ());
 
 	private Map <Integer, RequestWsTree> fRequestTreeList = Collections.synchronizedMap(
 			new LinkedHashMap <Integer, RequestWsTree>());
@@ -191,7 +197,7 @@ public class CommandProcessing implements Runnable {
 
 					EntityWindow entityWin = new EntityWindow(currentRow, debugger, entityType, name, offset, readOnly, size,
 							stop, text, tid, tname, token);
-					fDebugTarget.getEntityWindows().addEntityWindow(token, entityWin);
+					fDebugTarget.getEntityWindows().addEntityWindow(token, entityWin, false);
 				} catch (JSONException e) {
 					
 				}
@@ -233,7 +239,7 @@ public class CommandProcessing implements Runnable {
 
 					EntityWindow entityWin = new EntityWindow(currentRow, debugger, entityType, name, offset, readOnly, size,
 							stop, text, tid, tname, token);
-					fDebugTarget.getEntityWindows().addEntityWindow(token, entityWin);
+					fDebugTarget.getEntityWindows().addEntityWindow(token, entityWin, true);
 				} catch (JSONException e) {
 					
 				}
@@ -278,7 +284,21 @@ public class CommandProcessing implements Runnable {
 //				new DebugTargetEvent(new FocusEvent(cmdJ, tid));
 				break;
 			case "ReplyGetSIStack":
-//				int tidStk = cmdVal.getInt("tid");
+				int tidStk = cmdVal.getInt("tid");
+				JSONArray stkData = cmdVal.getJSONArray("stack");
+				int len = stkData.length();
+				String[] data = new String[len];
+				for (int i = 0; i < len; i++) {
+					data[i] = stkData.getString(i);
+				}
+				StackData stackData = new StackData(data, tidStk);
+				Runnable[] actions = fOnReceiveStackAction.remove(tidStk);
+				if (actions != null && actions.length > 0) {
+					for (Runnable action : actions) {
+						action.run();
+					}
+				}
+
 				fDebugTarget.setStackFrame(cmdJ);
 				CheckIfReply(cmdJ, "GetSIStack");
 				break;
@@ -302,6 +322,24 @@ public class CommandProcessing implements Runnable {
 			}
 		} catch (JSONException e) {
 			
+		}
+	}
+
+	/**
+	 * Add action after opening window
+	 */
+	public void addOnReceiveStackAction(int threadId, Runnable onOpenAction) {
+		synchronized (fOnReceiveStackAction) {
+			Runnable[] actions = fOnReceiveStackAction.get(threadId);
+			if (actions != null) {
+				Runnable[] moreActions = new Runnable[actions.length + 1];
+				System.arraycopy(actions, 0, moreActions, 0, actions.length);
+				actions = moreActions;
+			} else {
+				actions = new Runnable[1];
+			}
+			actions[actions.length - 1] = onOpenAction;
+			fOnReceiveStackAction.put(threadId, actions);
 		}
 	}
 

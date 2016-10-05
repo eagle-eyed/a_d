@@ -1,6 +1,7 @@
 package com.dyalog.apldev.debug.core.model.remote;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,16 +17,16 @@ public class EntityWindowsStack {
 	 */
 	private Map <Integer, EntityWindow> fEntityWindows = Collections.synchronizedMap(
 			new LinkedHashMap <Integer, EntityWindow> ());
-	/**
-	 * Opened entity windows name and token pairs
-	 */
-	private Map <String, Integer> fWindowNames = Collections.synchronizedMap(
-			new LinkedHashMap <String, Integer> ());
-	/**
-	 * Opened debug entity windows 
-	 */
-	private Map <String, Integer> fDebugWindowNames = Collections.synchronizedMap(
-			new LinkedHashMap <String, Integer> ());
+//	/**
+//	 * Opened entity windows name and token pairs
+//	 */
+//	private Map <String, Integer> fWindowNames = Collections.synchronizedMap(
+//			new LinkedHashMap <String, Integer> ());
+//	/**
+//	 * Opened debug entity windows 
+//	 */
+//	private Map <String, Integer> fDebugWindowNames = Collections.synchronizedMap(
+//			new LinkedHashMap <String, Integer> ());
 
 	/**
 	 * Lock for suppressing access during modification fEntityWindows and fWindowsNames
@@ -36,22 +37,33 @@ public class EntityWindowsStack {
 			new LinkedHashMap <String, Runnable[]> ());
 	private Map <String, Runnable[]> fOnOpenActionWithClose = Collections.synchronizedMap(
 			new LinkedHashMap <String, Runnable[]> ());
-	
+	private List<String> functionWaitsForOpen = Collections.synchronizedList(
+			new ArrayList <String> ());
+
 	public EntityWindowsStack(APLDebugTarget aplDebugTarget) {
 		this.debugTarget = aplDebugTarget;
 	}
 
 	/**
 	 * Add entity edit/view window
+	 * 
+	 * @param token window ID
+	 * @param entityWin new EntityWindow
+	 * @param update if that's change opened window
 	 */
-	public void addEntityWindow(int token, EntityWindow entityWin) {
+	public void addEntityWindow(int token, EntityWindow entityWin, boolean update) {
 		synchronized (EntityWindowsLock) {
-			fEntityWindows.put(token, entityWin);
-			if (entityWin.getDebugger()) {
-				fDebugWindowNames.put(entityWin.name, token);
-			} else {
-				fWindowNames.put(entityWin.name, token);
+			functionWaitsForOpen.remove(entityWin.name);
+			EntityWindow oldEntity = fEntityWindows.remove(entityWin.token);
+			if ( ! update && oldEntity != null && ! oldEntity.isClosed()) {
+					System.out.println("Closed window not removed from WindowsStack");
 			}
+			fEntityWindows.put(token, entityWin);
+//			if (entityWin.isDebug()) {
+//				fDebugWindowNames.put(entityWin.name, token);
+//			} else {
+//				fWindowNames.put(entityWin.name, token);
+//			}
 		}
 		debugTarget.updateThread(entityWin.getThreadId(), entityWin.getThreadName());
 		Runnable[] actions = fOnOpenAction.remove(entityWin.name);
@@ -68,7 +80,7 @@ public class EntityWindowsStack {
 			debugTarget.getInterpreterWriter().postCloseWindow(entityWin.token);
 		}
 	}
-	
+
 	/**
 	 * Add action after opening window
 	 */
@@ -100,6 +112,23 @@ public class EntityWindowsStack {
 		actions[actions.length - 1] = onOpenAction;
 		fOnOpenActionWithClose.put(name, actions);
 	}
+
+	/**
+	 * Return if edit name already called
+	 */
+	public boolean isOpening(String name) {
+		synchronized (EntityWindowsLock) {
+			return functionWaitsForOpen.contains(name);
+		}
+	}
+	
+	public void addEditname(String name) {
+		synchronized (EntityWindowsLock) {
+			if ( ! functionWaitsForOpen.contains(name)) {
+				functionWaitsForOpen.add(name);
+			}
+		}
+	}
 	
 	/**
 	 * Remove entity edit/view window
@@ -108,8 +137,8 @@ public class EntityWindowsStack {
 		try {
 			synchronized (EntityWindowsLock) {
 				EntityWindow entityWin = fEntityWindows.remove(win);
-				if (entityWin.getDebugger()) {
-					fDebugWindowNames.remove(entityWin.getName());
+				if (entityWin.isDebug()) {
+//					fDebugWindowNames.remove(entityWin.getName());
 					APLThread thread = debugTarget.getThread(entityWin.getThreadId());
 					// check if interpreter close window with recursive call function
 					boolean checkStackFrame = false;
@@ -124,7 +153,7 @@ public class EntityWindowsStack {
 //								.postGetSIStack();
 						
 				} else {
-					fWindowNames.remove(entityWin.getName());
+//					fWindowNames.remove(entityWin.getName());
 				}
 			}
 		} catch (NullPointerException e) {
@@ -132,19 +161,19 @@ public class EntityWindowsStack {
 		}
 	}
 
-	/**
-	 * Remove entity edit/view window
-	 */
-	public void remove (String name) {
-		try {
-			synchronized (EntityWindowsLock) {
-				int win = fWindowNames.remove(name);
-				fEntityWindows.remove(win);
-			}
-		} catch (NullPointerException e) {
-			
-		}
-	}
+//	/**
+//	 * Remove entity edit/view window
+//	 */
+//	public void remove (String name) {
+//		try {
+//			synchronized (EntityWindowsLock) {
+//				int win = fWindowNames.remove(name);
+//				fEntityWindows.remove(win);
+//			}
+//		} catch (NullPointerException e) {
+//			
+//		}
+//	}
 	
 	public EntityWindow getEntity (int win) {
 		synchronized (EntityWindowsLock) {
@@ -152,48 +181,49 @@ public class EntityWindowsStack {
 		}
 	}
 	
-	public Integer getToken (String name) {
-		synchronized (EntityWindowsLock) {
-			return fWindowNames.get(name);
-		}
-	}
+//	public Integer getToken (String name) {
+//		synchronized (EntityWindowsLock) {
+//			return fWindowNames.get(name);
+//		}
+//	}
 	
 	public EntityWindow getEntity (String name) {
 		synchronized (EntityWindowsLock) {
-			Integer win = fWindowNames.get(name);
-			if (win == null) {
+//			Integer win = fWindowNames.get(name);
+//			if (win == null) {
 				// search in all opened windows
 				Set <Integer> set = fEntityWindows.keySet();
 				for (int i : set) {
 					EntityWindow entityWin = fEntityWindows.get(i);
 					if (entityWin.getName().equals(name)
-							&& ! entityWin.getDebugger()) {
+							&& ! entityWin.isDebug()) {
 						return entityWin;
 					}
 				}
 				return null;
 			}
-			return fEntityWindows.get(win);
-		}
+//			return fEntityWindows.get(win);
+//		}
 	}
 	
-	public EntityWindow getDebugEntity (String name) {
+	public EntityWindow getDebugEntity (String name, int threadId) {
 		synchronized (EntityWindowsLock) {
-			Integer win = fDebugWindowNames.get(name);
-			if (win == null) {
+//			Integer win = fDebugWindowNames.get(name);
+//			if (win == null) {
 				// search in all opened windows
 				Set <Integer> set = fEntityWindows.keySet();
 				for (int i : set) {
 					EntityWindow entityWin = fEntityWindows.get(i);
 					if (entityWin.getName().equals(name)
-							&& entityWin.getDebugger()) {
+							&& entityWin.isDebug()
+							&& (threadId == entityWin.getThreadId() | threadId == -1)) {
 						return entityWin;
 					}
 				}
 				return null;
 			}
-			return fEntityWindows.get(win);
-		}
+//			return fEntityWindows.get(win);
+//		}
 	}
 }
 
