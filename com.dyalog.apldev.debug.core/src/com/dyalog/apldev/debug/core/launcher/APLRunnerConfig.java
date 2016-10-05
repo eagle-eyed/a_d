@@ -53,11 +53,7 @@ public class APLRunnerConfig {
 	public APLRunnerConfig(ILaunchConfiguration conf, String mode, String run,
 			boolean makeArgumentsVariableSubstitution) throws CoreException {
 
-		try {
-			project = getProjectFromConfiguration(conf);
-		} catch (CoreException e) {
-
-		}
+		project = getProjectFromConfiguration(conf);
 		this.configuration = conf;
 		this.run = run;
 		isDebug = mode.equals(ILaunchManager.DEBUG_MODE);

@@ -62,7 +62,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 	 */
 	public APLLineBreakpoint(final IResource resource, final int lineNumber)
 			throws CoreException {
-		ICoreRunnable runnable = new ICoreRunnable() {
+		IWorkspaceRunnable runnable = new IWorkspaceRunnable() {
 			@Override
 			public void run(IProgressMonitor monitor) throws CoreException {
 				IMarker marker = resource.createMarker(
@@ -75,7 +75,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 						+ " [line: " + lineNumber + "]");
 			}
 		};
-		run(getMarkerRule(resource), (IWorkspaceRunnable) runnable);
+		run(getMarkerRule(resource), runnable);
 		this.lineNumber = lineNumber;
 //		name = ;
 	}
@@ -132,13 +132,13 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 		// Check if function already opened by interpreter
 		EntityWindowsStack entityWins = target.getEntityWindows();
 		EntityWindow entityWin = entityWins.getEntity(name);
-		if (entityWin != null) {
+		if (entityWin != null && ! entityWin.isClosed()) {
 			if (entityWin.addStop(getLineNumber() - 1)) {
 				setBreakpointList(target, entityWin, text);
 			}
 		} else {
 			entityWin = entityWins.getEntity(name);
-			if (entityWin != null) {
+			if (entityWin != null && ! entityWin.isClosed()) {
 				if (entityWin.addStop(getLineNumber() - 1)) {
 					setBreakpointList(target, entityWin, text);
 				}
@@ -150,7 +150,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 					public void run() {
 						EntityWindow entity = entityWins.getEntity(name);
 						if (entity == null) {
-							entity = entityWins.getDebugEntity(name);
+							entity = entityWins.getDebugEntity(name, -1);
 						}
 						if (entity != null && entity.addStop(lineNumber - 1)) {
 							setBreakpointList(target, entity, text);
@@ -160,16 +160,16 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 				};
 				entityWins.addOnOpenActionWithClose(name, addBPonOpen); 
 
-				JSONArray cmd = new JSONArray();
-				cmd.put(0, "Edit");
-				JSONObject val = new JSONObject();
-				val.put("win", 0);
-				val.put("pos", 0);
-				val.put("text", name);
-				val.put("unsaved", new JSONObject());
-				cmd.put(1, val);
+//				JSONArray cmd = new JSONArray();
+//				cmd.put(0, "Edit");
+//				JSONObject val = new JSONObject();
+//				val.put("win", 0);
+//				val.put("pos", 0);
+//				val.put("text", name);
+//				val.put("unsaved", new JSONObject());
+//				cmd.put(1, val);
 //				JSONArray ans = new ReplyRequest(target).get(cmd);
-				target.getInterpreterWriter().postCommand(cmd.toString());
+				target.getInterpreterWriter().postEdit(0, 0, name, new String[0]);
 			}
 		}
 	}
@@ -218,14 +218,14 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 		
 		// Check if function already opened by interpreter
 		EntityWindowsStack entityWins = target.getEntityWindows();
-		EntityWindow entityWin = entityWins.getDebugEntity(name);
-		if (entityWin != null) {
+		EntityWindow entityWin = entityWins.getDebugEntity(name, -1);
+		if (entityWin != null && ! entityWin.isClosed()) {
 			if (entityWin.removeStop(getLineNumber() - 1)) {
 				setBreakpointList(target, entityWin, text);
 			}
 		} else {
 			entityWin = entityWins.getEntity(name);
-			if (entityWin != null) {
+			if (entityWin != null && ! entityWin.isClosed()) {
 				if (entityWin.removeStop(getLineNumber() - 1)) {
 					setBreakpointList(target, entityWin, text);
 				}
@@ -237,7 +237,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 					public void run() {
 						EntityWindow entity = entityWins.getEntity(name);
 						if (entity == null) {
-							entity = entityWins.getDebugEntity(name);
+							entity = entityWins.getDebugEntity(name, -1);
 						}
 						if (entity != null && entity.removeStop(lineNumber - 1)) {
 							setBreakpointList(target, entity, text);
@@ -263,7 +263,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 	
 	private void setBreakpointList(APLDebugTarget target, EntityWindow entityWin, String[] text) {
 		if (target != null && entityWin != null) {
-			if (entityWin.getDebugger()) {
+			if (entityWin.isDebug()) {
 				// interpreter open debugger window
 				JSONArray cmdSet = new JSONArray();
 				JSONObject valSet = new JSONObject();

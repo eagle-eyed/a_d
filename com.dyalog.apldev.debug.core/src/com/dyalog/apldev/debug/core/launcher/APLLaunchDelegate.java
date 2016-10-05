@@ -6,6 +6,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -82,6 +83,22 @@ public class APLLaunchDelegate extends LaunchConfigurationDelegate {
 			monitor = new NullProgressMonitor();
 		}
 
+		String projectName = configuration.getAttribute(APLDebugCorePlugin.ATTR_PROJECT_NAME, (String) null);
+		IProject project = null;
+		if (projectName != null && projectName.length() > 0) {
+			project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+		}
+		
+		if (projectName == null) {
+			abort("Can't read project name", null);
+		} else if (project == null) {
+			abort(MessageFormat.format("Can't open {0} project", new Object[] {projectName}), null);
+		} else if ( ! project.exists()) {
+			abort(MessageFormat.format("Project {0} not exist", new Object[] {projectName}), null);
+		} else if ( ! project.isOpen()) {
+			abort(MessageFormat.format("Project {0} not opened", new Object[] {projectName}), null);
+		}
+		
 		monitor.setTaskName("Preparing Configuration");
 		SubMonitor subMonitor = SubMonitor.convert(monitor, "Preparing configuration", 3);
 		APLRunnerConfig config = new APLRunnerConfig(configuration, mode,
