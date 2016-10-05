@@ -74,9 +74,12 @@ import com.dyalog.apldev.debug.core.model.remote.DebuggerWriter;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindow;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindowsStack;
 import com.dyalog.apldev.debug.core.model.remote.RemoteDebugger;
+import com.dyalog.apldev.debug.core.model.remote.ReplyEditRequest;
 import com.dyalog.apldev.debug.core.model.remote.ReplyRequest;
+import com.dyalog.apldev.debug.core.model.remote.ReplyStackRequest;
 import com.dyalog.apldev.debug.core.model.remote.RequestValueTip;
 import com.dyalog.apldev.debug.core.model.remote.RequestWsTree;
+import com.dyalog.apldev.debug.core.model.remote.StackData;
 import com.dyalog.apldev.debug.core.model.remote.WorkspaceEditorInput;
 import com.dyalog.apldev.debug.core.protocol.APLEvent;
 import com.dyalog.apldev.debug.core.protocol.CIPEvent;
@@ -660,6 +663,7 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 			fProcess = null;
 		}
 
+		fConsoles.terminate();
 		fireTerminateEvent();
 //		fireEvent(new DebugEvent(this, DebugEvent.TERMINATE));
 	}
@@ -955,16 +959,19 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 	/**
 	 * Load text into interpreter workspace
 	 */
-	public boolean loadToWorkspace(final String[] text, String name) {
+	public boolean loadToWorkspace(final String[] text, final String name) {
 		if (name == null || name.length() == 0)
 			return false;
 		// Check if function window already opened
 		EntityWindowsStack entityWins = getEntityWindows();
 		EntityWindow entityWin = entityWins.getEntity(name);
-		if (entityWin != null) {
+		if (entityWin != null && ! entityWin.isClosed()) {
 			getInterpreterWriter().postSave(entityWin.token, text, entityWin.getStop());
 		} else {
 			Runnable saveOnOpen = new Runnable() {
+				public void Runnable () {
+					
+				}
 				@Override
 				public void run() {
 					EntityWindow entity = entityWins.getEntity(name);
@@ -972,6 +979,7 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 				}
 			};
 			entityWins.addOnOpenActionWithClose(name, saveOnOpen);
+			getInterpreterWriter().postEdit(0, 0, name);
 		}
 //		// open window
 //		JSONArray cmd = new JSONArray();
@@ -1190,8 +1198,20 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 		this.updateGlobalVariables = true;
 	}
 	
+	public void promptChanged() {
+		updateGlobalVariables = true;
+		APLStackFrame frame = null;
+		try {
+			frame = (APLStackFrame) getThread(0).getTopStackFrame();
+		} catch (DebugException e) {
+		}
+		if (frame != null) {
+//			frame.Changed();
+			frame.fireChangeEvent(DebugEvent.EVALUATION);
+		}
+	}
 	public void UpdateGlobalVariables() {
-		if (!updateGlobalVariables)
+		if ( ! updateGlobalVariables)
 			return;
 		updateGlobalVariables = false;
 		JSONObject data = new RequestWsTree(fWriter).get(0);
@@ -1264,15 +1284,27 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 
 	}
 	
-	public String getValueTip(String functionName, String line, int pos, int maxWidth, int maxHeight) {
-		Integer win = entityWindowsStack.getToken(functionName);
-		if (win == null)
-			return null;
-		int token = win;
+	public String getValueTip(final String functionName, String line, int pos, int maxWidth, int maxHeight) {
+		EntityWindow entityWin = entityWindowsStack.getEntity(functionName);
+		if (entityWin == null) {
+			final ReplyEditRequest request = new ReplyEditRequest(this);
+			Runnable valueOnOpen = new Runnable() {
+				@Override
+				public void run() {
+					request.put(entityWindowsStack.getEntity(functionName));
+				}
+			};
+			entityWindowsStack.addOnOpenAction(functionName, valueOnOpen);
+			entityWin = request.get(0, 0, functionName);
+			if (entityWin == null) {
+				return null;
+			}
+		}
+		int token = entityWin.token;
 		JSONArray cmd = new JSONArray();
 		cmd.put(0, "GetValueTip");
 		JSONObject val = new JSONObject();
-		val.put("win", win);
+		val.put("win", entityWin.token);
 		val.put("line", line);
 		val.put("pos", pos);
 		val.put("token", token);
@@ -1312,30 +1344,48 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 		if (_event instanceof CIPEvent) {
 			CIPEvent event = (CIPEvent) _event;
 			EntityWindow entityWin = entityWindowsStack.getEntity(event.win);
-			if (entityWin == null)
+			if (entityWin == null) {
 				return;
+			}
 //			APLThread thread = fThreads.get(entityWin.getThreadId());
 			APLThread thread = getThread(entityWin.getThreadId());
 //			thread.name = entityWin.tname;
 			this.currentThread = thread;
 			entityWin.setLineNumer(event.line);
 			thread.setTopStackWindowId(entityWin.token);
-			// Ask for stack frame
-			try {
-				JSONArray cmd = new JSONArray();
-				cmd.put(0, "GetSIStack");
-				JSONObject val = new JSONObject();
-				cmd.put(1, val);
-				JSONArray ans = new ReplyRequest(getDebugTarget()).get(cmd);
-				if (ans != null) {
-					JSONObject ansVal = ans.getJSONObject(1);
-					JSONArray stack = ansVal.getJSONArray("stack");
-					int tid = ansVal.getInt("tid");
-					if (tid == thread.getIdentifier()) {
-						// already stack updated
-//						thread.setStackFrame(stack);
-					}
+			ReplyStackRequest request = new ReplyStackRequest(this, entityWin.getThreadId());
+			Runnable onReceiveStack = new Runnable() {
+
+				@Override
+				public void run() {
+//					StackData stackData = debugTarget.getCommandProc().getStackData(threadId)
+					request.put(true);
 				}
+				
+			};
+			getCommandProc().addOnReceiveStackAction(entityWin.getThreadId(), onReceiveStack);
+
+			Boolean stackDataReceived = request.get();
+			if (stackDataReceived == null) {
+				System.out.println("Can't recieve stack frame");
+			}
+
+			// Ask for stack frame
+//			try {
+//				JSONArray cmd = new JSONArray();
+//				cmd.put(0, "GetSIStack");
+//				JSONObject val = new JSONObject();
+//				cmd.put(1, val);
+//				JSONArray ans = new ReplyRequest(getDebugTarget()).get(cmd);
+//				if (ans != null) {
+//					JSONObject ansVal = ans.getJSONObject(1);
+//					JSONArray stack = ansVal.getJSONArray("stack");
+//					int tid = ansVal.getInt("tid");
+//					if (tid == thread.getIdentifier()) {
+//						// already stack updated
+////						thread.setStackFrame(stack);
+//					}
+//				}
 				if (err == 1001) {
 					thread.handleEvent("suspended breakpoint");
 					err = 0;
@@ -1343,9 +1393,10 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 				} else {
 					thread.handleEvent("suspended client");
 				}
-			} catch (JSONException e) {
-				
-			}
+//			} catch (JSONException e) {
+//				
+//			}
+			setNeedUpdateGlobalVariables();
 		}
 		else if (_event instanceof FocusEvent) {
 			FocusEvent event = (FocusEvent) _event;

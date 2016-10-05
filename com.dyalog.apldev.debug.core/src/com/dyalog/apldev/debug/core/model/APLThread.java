@@ -142,36 +142,6 @@ public class APLThread extends APLDebugElement implements IThread,
 		if (isSuspended() && fUpdate) {
 			fUpdate = false;
 			((APLDebugTarget) getDebugTarget()).setNeedUpdateGlobalVariables();
-			boolean debug = true;
-			if (debug)
-				return;
-			String framesData = sendRequest("stack");
-			
-			if (framesData != null) {
-				String[] frames = framesData.split("#");
-				// here stored updated frames parameters
-				APLStackFrame[] ntheFrames = new APLStackFrame[frames.length];
-				// copy existed frames to new array 
-				for (int i = 0; theFrames != null &&
-						i < Math.min(theFrames.length, ntheFrames.length); i++) {
-					ntheFrames[frames.length - i - 1] =
-							theFrames[theFrames.length - i - 1];
-					
-				}
-				for (int i = 0; i < frames.length; i++) {
-					if (ntheFrames[frames.length - i - 1] == null) {
-						ntheFrames[frames.length - i - 1] = new APLStackFrame(this, frames[i], i);
-					} else {
-						ntheFrames[frames.length - i - 1].update(frames[i], i);
-					}
-				}
-//				System.out.print("@");
-//				for (int i = 0; i < frames.length; i++) {
-//					ntheFrames[frames.length - i - 1] = new APLStackFrame(this, frames[i], i);
-//				}
-				theFrames = ntheFrames;
-			}
-			
 		}
 	}
 	
@@ -210,9 +180,9 @@ public class APLThread extends APLDebugElement implements IThread,
 		EntityWindow entity = null;
 		if (frame != null) {
 			EntityWindowsStack entityWins = ((APLDebugTarget) getDebugTarget()).getEntityWindows();
-			entity = entityWins.getDebugEntity(frame.getFunctionName());
+			entity = entityWins.getDebugEntity(frame.getFunctionName(), fThreadId);
 		}
-		if (entity != null && entity.getDebugger()) {
+		if (entity != null && entity.isDebug()) {
 			JSONArray cmd = new JSONArray();
 			cmd.put(0, "Continue");
 			JSONObject val = new JSONObject();
@@ -222,6 +192,11 @@ public class APLThread extends APLDebugElement implements IThread,
 			target.getInterpreterWriter()
 				.postCommand(cmd.toString());
 			resumed(DebugEvent.CLIENT_REQUEST);
+//			APLStackFrame[] frames = (APLStackFrame[]) getStackFrames();
+			for (APLStackFrame sFrame : theFrames) {
+				sFrame.terminateStack();
+			}
+			theFrames = new APLStackFrame[0];
 		}
 	}
 
@@ -258,22 +233,27 @@ public class APLThread extends APLDebugElement implements IThread,
 		EntityWindow entity = null;
 		if (frame != null) {
 			EntityWindowsStack entityWins = ((APLDebugTarget) getDebugTarget()).getEntityWindows();
-			entity = entityWins.getDebugEntity(frame.getFunctionName());
+			entity = entityWins.getDebugEntity(frame.getFunctionName(), fThreadId);
 		}
-		if (entity != null && entity.getDebugger()) {
-			JSONArray cmd = new JSONArray();
-			cmd.put(0, "StepInto");
-			JSONObject val = new JSONObject();
-			val.put("win", entity.token);
-			cmd.put(1, val);
+		if (entity != null && entity.isDebug()) {
+//			JSONArray cmd = new JSONArray();
+//			cmd.put(0, "StepInto");
+//			JSONObject val = new JSONObject();
+//			val.put("win", entity.token);
+//			cmd.put(1, val);
 			((APLDebugTarget) getDebugTarget()).getInterpreterWriter()
-				.postCommand(cmd.toString());
+				.postStepInto(entity.token);
+//				.postCommand(cmd.toString());
 			// Check if that is last function command 
 			if (entity.getLineNumber() == 0) {
 				// if window can close call event which need update stack frame
 				resumed(DebugEvent.CLIENT_REQUEST);
 			} else
 				resumed(DebugEvent.STEP_INTO);
+			for (APLStackFrame sframe : theFrames) {
+				sframe.fireTerminateEvent();
+			}
+			theFrames = new APLStackFrame[0];
 		}
 	}
 
@@ -283,16 +263,18 @@ public class APLThread extends APLDebugElement implements IThread,
 		EntityWindow entity = null;
 		if (frame != null) {
 			EntityWindowsStack entityWins = ((APLDebugTarget) getDebugTarget()).getEntityWindows();
-			entity = entityWins.getDebugEntity(frame.getFunctionName());
+			entity = entityWins.getDebugEntity(frame.getFunctionName(), fThreadId);
 		}
-		if (entity != null && entity.getDebugger()) {
-			JSONArray cmd = new JSONArray();
-			cmd.put(0, "RunCurrentLine");
-			JSONObject val = new JSONObject();
-			val.put("win", entity.token);
-			cmd.put(1, val);
-			APLDebugTarget target = (APLDebugTarget) getDebugTarget(); 
-			target.getInterpreterWriter().postCommand(cmd.toString());
+		if (entity != null && entity.isDebug()) {
+//			JSONArray cmd = new JSONArray();
+//			cmd.put(0, "RunCurrentLine");
+//			JSONObject val = new JSONObject();
+//			val.put("win", entity.token);
+//			cmd.put(1, val);
+//			APLDebugTarget target = (APLDebugTarget) getDebugTarget(); 
+//			target.getInterpreterWriter().postCommand(cmd.toString());
+			((APLDebugTarget) getDebugTarget()).getInterpreterWriter()
+				.postStepOver(entity.token);
 			// If it's last function command don't remember stack frame
 			if (entity.getLineNumber() == 0) {
 				resumed(DebugEvent.CLIENT_REQUEST);
@@ -309,17 +291,18 @@ public class APLThread extends APLDebugElement implements IThread,
 		EntityWindow entity = null;
 		if (frame != null) {
 			EntityWindowsStack entityWins = ((APLDebugTarget) getDebugTarget()).getEntityWindows();
-			entity = entityWins.getDebugEntity(frame.getFunctionName());
+			entity = entityWins.getDebugEntity(frame.getFunctionName(), fThreadId);
 		}
-		if (entity != null && entity.getDebugger()) {
+		if (entity != null && entity.isDebug()) {
 
-		JSONArray cmd = new JSONArray();
-		cmd.put(0, "ContinueTrace");
-		JSONObject val = new JSONObject();
-		val.put("win", entity.token);
-		cmd.put(1, val);
+//		JSONArray cmd = new JSONArray();
+//		cmd.put(0, "ContinueTrace");
+//		JSONObject val = new JSONObject();
+//		val.put("win", entity.token);
+//		cmd.put(1, val);
 		((APLDebugTarget) getDebugTarget()).getInterpreterWriter()
-			.postCommand(cmd.toString());
+			.postStepReturn(entity.token);
+//			.postCommand(cmd.toString());
 		}	
 	}
 
@@ -342,11 +325,16 @@ public class APLThread extends APLDebugElement implements IThread,
 			return;
 		}
 		if (frame != null) {
+			
 			EntityWindowsStack entityWins = ((APLDebugTarget) getDebugTarget()).getEntityWindows();
-			EntityWindow entity = entityWins.getDebugEntity(frame.getFunctionName());
-			if (entity != null && entity.getDebugger()) {
+			EntityWindow entity = entityWins.getDebugEntity(frame.getFunctionName(), fThreadId);
+			if (entity != null && entity.isDebug()) {
 				((APLDebugTarget) getDebugTarget()).getInterpreterWriter()
-					.postCommand("[\"CutBack\",{\"win\":" + topStackWindowId + "}]");
+					.postCutback(entity.token);
+//					.postCommand("[\"Cutback\",{\"win\":" + topStackWindowId + "}]");
+//				fireChangeEvent(DebugEvent.RESUME);
+//				frame.Changed();
+				resumed(DebugEvent.CLIENT_REQUEST);
 			}
 		}
 	}

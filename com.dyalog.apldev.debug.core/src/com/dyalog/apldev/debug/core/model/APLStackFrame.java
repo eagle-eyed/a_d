@@ -4,6 +4,7 @@ package com.dyalog.apldev.debug.core.model;
 
 //import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IDropToFrame;
 import org.eclipse.debug.core.model.IRegisterGroup;
@@ -45,7 +46,6 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 		this.fId = id;
 		this.fThread = thread;
 		init(data);
-//		fireCreationEvent();
 
 	}
 
@@ -60,8 +60,13 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 		this.fFileSource = funName + ".apl";
 		this.fFileName = fFileSource;
 		this.fName = data;
+		fireCreationEvent();
 	}
 
+	public void terminateStack() {
+		fireTerminateEvent();
+	}
+	
 	public String getFunctionName() {
 		return funName;
 	}
@@ -113,7 +118,8 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 		
 //		return fId != 0 ? getThread().canStepReturn()
 //				: false;
-		return fId > 0 && fThread.isSuspended() ? true : false;
+//		return fId > 0 && fThread.isSuspended() ? true : false;
+		return fThread.isSuspended() ? true : false;
 	}
 
 	public boolean isStepping() {
@@ -229,13 +235,13 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 		return fThread;
 	}
 
-	/**
-	 * !!! Must return non <code>null</code>, or
+	/*
+	 * Must return non <code>null</code>, or
 	 * org.eclipse.debug.internal.ui.model.elements.StackFrameContentProviderElementContentProvider
 	 * can induce NullPointerException
 	 */
 	public IVariable[] getVariables() throws DebugException {
-		if (!fThread.isSuspended()) return new IVariable[0];
+//		if (!fThread.isSuspended()) return new IVariable[0];
 //		return fThread.getVariables(this);
 //		IVariable[] ThreadVar = fThread.getVariables(this);
 		IVariable[] globVars = ((APLDebugTarget) getDebugTarget()).getGlobalVariables();
@@ -276,18 +282,23 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 
 	public boolean canDropToFrame() {
 //		return getThread().canDropToFrame(fId);
-		return fId > 0 && fThread.isSuspended() ? true : false;
+//		return fId > 0 && fThread.isSuspended() ? true : false;
+		return fThread.isSuspended() ? true : false;
 	}
 
 	public void dropToFrame() throws DebugException {
 		// if current isn't top stack frame drop other
-		if (fId > 0 &&
-				fThread.getStackFramesCount()-1 > fId) {
-			APLStackFrame frame = fThread.getStackFrame(fId + 1);
-			if (frame != null)
-				frame.dropToFrame();
-//			fThread.dropToFrame(fId + 1);
-		}
+//		if (fId > 0 &&
+//				fThread.getStackFramesCount()-1 > fId) {
+//			APLStackFrame frame = fThread.getStackFrame(fId + 1);
+//			if (frame != null)
+//				frame.dropToFrame();
+////			fThread.dropToFrame(fId + 1);
+//		}
 		fThread.dropToFrame();
+	}
+
+	public void Changed() {
+		fireChangeEvent(DebugEvent.EVALUATION);
 	}
 }
