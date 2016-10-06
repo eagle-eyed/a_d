@@ -527,13 +527,6 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 		}
 	}
 
-	public void sendRide(String val) throws CoreException {
-		try { Thread.sleep(1000); } catch (InterruptedException e) {	}
-//		System.out.println("> " + val);
-
-		sendRequestNoReply(val);
-	}
-	
 @SuppressWarnings("restriction")
 // Write to Process console
 	void writeProcessConsole() {
@@ -1200,16 +1193,8 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 	
 	public void promptChanged() {
 		updateGlobalVariables = true;
-		APLStackFrame frame = null;
-		try {
-			frame = (APLStackFrame) getThread(0).getTopStackFrame();
-		} catch (DebugException e) {
-		}
-		if (frame != null) {
-//			frame.Changed();
-			frame.fireChangeEvent(DebugEvent.EVALUATION);
-		}
 	}
+	
 	public void UpdateGlobalVariables() {
 		if ( ! updateGlobalVariables)
 			return;

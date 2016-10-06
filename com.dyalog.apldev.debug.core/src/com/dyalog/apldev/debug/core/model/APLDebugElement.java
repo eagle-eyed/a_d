@@ -9,7 +9,7 @@ import org.eclipse.debug.core.model.IDebugTarget;
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 
 /**
- * Common function for PDA debug elements.
+ * Common function for APL debug elements.
  */
 public class APLDebugElement extends DebugElement {
 
@@ -36,13 +36,6 @@ public class APLDebugElement extends DebugElement {
 	 */
 	public String sendRequest(String request) throws DebugException {
 		return getAPLDebugTarget().sendRequest(request);
-	}
-	
-	/**
-	 * Send Request without waiting reply
-	 */
-	public void sendRequestNoReply(String request) throws DebugException {
-		getAPLDebugTarget().sendRequestNoReply(request);
 	}
 	
 	/**

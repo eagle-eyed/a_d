@@ -27,6 +27,7 @@ public abstract class ScriptConsole extends TextConsole implements ICommandHandl
 	protected ScriptConsolePartitioner fPartitioner;
 	private WeakReference<ScriptConsoleViewer> viewer;
 	private AplDevConsoleInterpreter interpreter;
+	private boolean fTerminated;
 	
 	
 	public ScriptConsole(String name, ImageDescriptor imageDescriptor,
@@ -57,6 +58,9 @@ public abstract class ScriptConsole extends TextConsole implements ICommandHandl
 	}
 	
 	public void terminate() {
+		if (isTerminated())
+			return;
+		fTerminated = true;
 		if (history != null)
 			history.close();
 		history = null;
@@ -71,6 +75,10 @@ public abstract class ScriptConsole extends TextConsole implements ICommandHandl
 		RunInUiThread.sync(runnable);
 //		ColorManager colMan = ColorManager.getDefault();
 //		colMan.dispose();
+	}
+	
+	public boolean isTerminated() {
+		return fTerminated;
 	}
 
 	/**
@@ -147,6 +155,7 @@ public abstract class ScriptConsole extends TextConsole implements ICommandHandl
 	public void handleCommand(String userInput,
 			ICallback<Object, InterpreterResponse> onResponseReceived) {
 		
+		if (isTerminated()) return;
 		final Object[] listeners = fConsoleListeners.getListeners();
 		
 		// executes the user input in the interpreter
