@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Date;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -20,6 +21,9 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.internal.ui.views.console.ProcessConsole;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
@@ -89,7 +93,15 @@ public class SessionConsole {
 		// Create console for RIDE protocol
 		ImageDescriptor descR = getImageDesc("icons/cubeR.ico");
 		String name = target.getName();
-		boolean enableRIDEConsole = false;
+		ILaunch launch = target.getLaunch();
+		String timeStamp = launch.getAttribute(DebugPlugin.ATTR_LAUNCH_TIMESTAMP);
+		ILaunchConfiguration conf = launch.getLaunchConfiguration();
+		boolean enableRIDEConsole;
+		try {
+			enableRIDEConsole = conf.getAttribute(APLDebugCorePlugin.ATTR_SHOW_RIDE, false);
+		} catch (CoreException e) {
+			enableRIDEConsole = false;
+		}
 		if (enableRIDEConsole) {
 			fConsoleRIDE = createConsole("RIDE: " + name, descR);
 			foutRIDE = fConsoleRIDE.newOutputStream();
@@ -105,7 +117,7 @@ public class SessionConsole {
 		AplDevConsoleInterpreter consoleInterpreter = new AplDevConsoleInterpreter(fTarget);
 		fTarget.setConsoleInterpter(consoleInterpreter);
 		ImageDescriptor desc = APLDebugCorePlugin.getImageDescriptor("icons/cube.ico");
-		fAplDevConsole = new AplDevConsole("Session: " + name, desc, consoleInterpreter);
+		fAplDevConsole = new AplDevConsole("Session: " + name + timeStamp, desc, consoleInterpreter);
 		fConManager = ConsolePlugin.getDefault().getConsoleManager();
 		fConManager.addConsoles(new IConsole[] {fAplDevConsole});
 

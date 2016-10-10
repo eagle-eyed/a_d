@@ -48,6 +48,7 @@ public class InterpreterTab extends AbstractLaunchConfigurationTab {
 	private Text fPortText;
 	private Button fConnectButton;
 	private Text fHostText;
+	private Button fRideButton;
 	
 	public InterpreterTab(MainModuleTab mainModuleTab) {
 		fWorkingDirectoryBlock = new APLWorkingDirectoryBlock();
@@ -151,6 +152,8 @@ public class InterpreterTab extends AbstractLaunchConfigurationTab {
 				updateLaunchConfigurationDialog();
 			} else if (source == fConnectButton) {
 				handleConnectButtonSelected();
+				updateLaunchConfigurationDialog();
+			} else if (source == fRideButton) {
 				updateLaunchConfigurationDialog();
 			}
 		}
@@ -312,7 +315,19 @@ public class InterpreterTab extends AbstractLaunchConfigurationTab {
 				event.doit = event.text.length() == 0 || Character.isDigit(event.text.charAt(0));
 			}
 		});
-
+		
+		Composite rcomp = new Composite(group, SWT.NONE);
+		GridLayout gl = new GridLayout(1, false);
+		rcomp.setLayout(gl);
+		rcomp.setFont(parent.getFont());
+		GridData gd = new GridData(GridData.HORIZONTAL_ALIGN_END);
+		gd.horizontalSpan = 5;
+		rcomp.setLayoutData(gd);
+		gl.marginHeight = 1;
+		gl.marginWidth = 0;
+		fRideButton = createCheckButton(rcomp, "RIDE console");
+//		fRideButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.NORMAL, false, false));
+		fRideButton.addSelectionListener(fListener);
 	}
 	
 	public void setDefaults(ILaunchConfigurationWorkingCopy config) {
@@ -349,6 +364,7 @@ public class InterpreterTab extends AbstractLaunchConfigurationTab {
 			fPortText.setText(configuration.getAttribute(APLDebugCorePlugin.ATTR_INTERPRETER_PORT, "4502"));
 			handleLaunchButtonSelected();
 			handleConnectButtonSelected();
+			fRideButton.setSelection(configuration.getAttribute(APLDebugCorePlugin.ATTR_SHOW_RIDE, false));
 		} catch (CoreException e) {
 			setErrorMessage("Exception occurred reading configuration:"
 					+ e.getStatus().getMessage());
@@ -366,6 +382,7 @@ public class InterpreterTab extends AbstractLaunchConfigurationTab {
 		configuration.setAttribute(APLDebugCorePlugin.ATTR_PROGRAM_ARGUMENTS, 
 				getAttributeValueFrom(fPrgmArgumentsText));
 		fWorkingDirectoryBlock.performApply(configuration);
+		configuration.setAttribute(APLDebugCorePlugin.ATTR_SHOW_RIDE, fRideButton.getSelection());
 	}
 
 	/**
