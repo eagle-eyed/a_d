@@ -89,8 +89,10 @@ public class DebuggerReader implements Runnable {
 //				String cmdLine = readLine();
 //				if(fInput.available() > 0) {
 //					int in = fInput.read();
-					if (fCommand.readStream())
+					if (fCommand.readStream()) {
 						fCommandProc.postCommand(fCommand.getCommand());
+//						fCommandProc.parseCommand(fCommand.getCommand());
+					}
 //				}
 //				processCommand(cmdLine);
 //				synchronized (lock) {

@@ -14,6 +14,7 @@ import org.eclipse.debug.core.model.IVariable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindow;
 
 public class APLStackFrame extends APLDebugElement implements IStackFrame, IDropToFrame {
@@ -22,15 +23,24 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 	private String fName;
 	private int fPC;
 	private long fTime;
-	// for debug
-	public String timeStamp;
-//	private int lineNumber;
 	private String fFileName;
-//	private IPath fFilePath;
 	private String fFileSource;
 	private int fId;
 	private String funName;
 	private int lineNumber;
+	/**
+	 * This frame's depth in the call stack (0 == bottom of stack). A new is
+	 * indicated by -2. An invalid frame is indicated by -1.
+	 */
+	private int fDepth = -2;
+	/**
+	 * Stack frame value received from interpreter
+	 */
+	private String fStackFrameData;
+	/**
+	 * Whether the variables need refreshing
+	 */
+	private boolean fRefreshVariables = true;
 	
 	/**
 	 * Constructs a stack frame in the given thread with the given
@@ -40,15 +50,21 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 	 * @param data frame data
 	 * @param id stack frame id (0 is the bottom of the stack)
 	 */
-	public APLStackFrame(APLThread thread, String data, int id) {
-		super(thread.getAPLDebugTarget());
+	public APLStackFrame(APLThread thread, String frame, int depth) {
+//		super(thread.getAPLDebugTarget());
+		super(thread.getDebugTarget());
 
-		this.fId = id;
 		this.fThread = thread;
-		init(data);
-
+		bind(frame, depth);
 	}
 
+	/**
+	 * Creates a new stack frame in the given thread
+	 */
+//	public APLSTackFrame(APLThread thread, String frame, int depth) {
+//		super((APLDebugTarget) thread.getDebugTarget())
+//	}
+	
 	public APLStackFrame(APLThread thread, String data,
 				int lineNumber, String funName, int id) {
 		super(thread.getAPLDebugTarget());
@@ -56,17 +72,12 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 		this.fId = id;
 		this.fThread = thread;
 		this.lineNumber = lineNumber;
-		this.funName =funName;
+		this.funName = funName;
 		this.fFileSource = funName + ".apl";
 		this.fFileName = fFileSource;
 		this.fName = data;
-		fireCreationEvent();
 	}
 
-	public void terminateStack() {
-		fireTerminateEvent();
-	}
-	
 	public String getFunctionName() {
 		return funName;
 	}
@@ -79,31 +90,6 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 	public void update(String data, int id) {
 		this.fId = id;
 		init(data);
-	}
-	
-	/**
-	 * Initializes this frame based on its data
-	 * 
-	 * @param data
-	 */
-	private void init(String data) {
-		String[] strings = data.split("\\|");
-		String pc = strings[1];
-		this.fPC = Integer.parseInt(pc) + 1;
-		this.fTime = System.nanoTime();
-
-		
-		String fileName = strings[0];
-//		fFilePath = new Path(fileName);
-		fFileSource = fileName;
-		fFileName = (new Path(fileName)).lastSegment();
-		fName = strings[2];
-		int numVars = strings.length - 3;
-		IVariable[] vars = new IVariable[numVars];
-		for (int i = 0; i < numVars; i++) {
-			vars[i] = new APLVariable(this, strings[i + 3]);
-		}
-		fThread.setVariables(this, vars);
 	}
 	
 	public boolean canStepInto() {
@@ -184,7 +170,8 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 	 * with
 	 */
 	public String getSourceName() {
-		return fFileName;
+		return funName + "." + APLDebugCorePlugin.MODULES_EXTENSION;
+//		return fFileName;
 	}
 	
 //	public IPath getSourcePath() {
@@ -269,7 +256,8 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 	 * Stack frame label in Debug View
 	 */
 	public String getName() throws DebugException {
-		return fName;
+//		return fName;
+		return fStackFrameData;
 	}
 
 	public IRegisterGroup[] getRegisterGroups() throws DebugException {
@@ -298,7 +286,71 @@ public class APLStackFrame extends APLDebugElement implements IStackFrame, IDrop
 		fThread.dropToFrame();
 	}
 
-	public void Changed() {
-		fireChangeEvent(DebugEvent.EVALUATION);
+	/**
+	 * Binds this frame to the given underlying frame or returns a new frame
+	 * representing the given frame. A frame can only be re-bound to an underlying
+	 * frame if it refers to the same depth on the stack in the same method.
+	 */
+	public APLStackFrame bind(String frame, int depth) {
+		synchronized(fThread) {
+			if (fDepth == -2) {
+				// first initialization
+				fStackFrameData = frame;
+				fDepth = depth;
+				fId = depth;
+				init(frame);
+				return this;
+			} else if (depth == -1) {
+				// mark as invalid
+				fDepth = -1;
+				fStackFrameData = null;
+				return null;
+			} else if (fDepth == depth) {
+				fStackFrameData = frame;
+				init(frame);
+				return this;
+			}
+			// invalidate this frame
+			bind(null, -1);
+			// return a new frame
+			return new APLStackFrame(fThread, frame, depth);
+		}
 	}
+
+	/**
+	 * Initializes this frame based on its data
+	 * 
+	 * @param data
+	 */
+	private void init(String data) {
+		int posStartLineNum = data.indexOf('[');
+		int posEndLineNum = data.indexOf(']');
+		int lineNum;
+		try {
+			lineNum = Integer.parseInt(
+					data.substring(posStartLineNum + 1, posEndLineNum)) + 1;
+		} catch (NumberFormatException e) {
+			lineNum = 1;
+		} catch (StringIndexOutOfBoundsException e2) {
+			lineNum = 1;
+		}
+		this.lineNumber = lineNum;
+		String namespace = data.substring(0, posStartLineNum);
+		int indexFunName = namespace.lastIndexOf('.');
+		funName = namespace.substring(indexFunName + 1);
+	}
+
+	/**
+	 * Sets the underlying stack frame data. Called by a thread when incrementally
+	 * updating after a step has completed.
+	 */
+	protected void setUnderlyingStackFrame(String frame) {
+		synchronized (fThread) {
+			fStackFrameData = frame;
+			if (frame == null) {
+				fRefreshVariables = true;
+			}
+		}
+	}
+
 }
