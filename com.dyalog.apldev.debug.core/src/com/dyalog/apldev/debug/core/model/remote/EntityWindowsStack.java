@@ -1,7 +1,6 @@
 package com.dyalog.apldev.debug.core.model.remote;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -81,36 +80,59 @@ public class EntityWindowsStack {
 		}
 	}
 
+	public void GotoWindowAction(int win) {
+		EntityWindow entity = getEntity(win);
+		if ( ! entity.isTracer()) {
+			Runnable[] actions = fOnOpenAction.remove(entity.name);
+			if (actions != null && actions.length > 0) {
+				for (Runnable action : actions) {
+					action.run();
+				}
+			}
+			actions = fOnOpenActionWithClose.remove(entity.name);
+			if (actions != null && actions.length > 0) {
+				for (Runnable action : actions) {
+					action.run();
+				}
+				debugTarget.getInterpreterWriter().postCloseWindow(entity.token);
+			}
+		}
+	}
+
 	/**
 	 * Add action after opening window
 	 */
 	public synchronized void addOnOpenAction(String name, Runnable onOpenAction) {
-		Runnable[] actions = fOnOpenAction.get(name);
-		if (actions != null) {
-			Runnable[] moreActions = new Runnable[actions.length + 1];
-			System.arraycopy(actions, 0, moreActions, 0, actions.length);
-			actions = moreActions;
-		} else {
-			actions = new Runnable[1];
+		synchronized (fOnOpenAction) {
+			Runnable[] actions = fOnOpenAction.get(name);
+			if (actions != null) {
+				Runnable[] moreActions = new Runnable[actions.length + 1];
+				System.arraycopy(actions, 0, moreActions, 0, actions.length);
+				actions = moreActions;
+			} else {
+				actions = new Runnable[1];
+			}
+			actions[actions.length - 1] = onOpenAction;
+			fOnOpenAction.put(name, actions);
 		}
-		actions[actions.length - 1] = onOpenAction;
-		fOnOpenAction.put(name, actions);
 	}
 
 	/**
 	 * Add action after opening window
 	 */
 	public synchronized void addOnOpenActionWithClose(String name, Runnable onOpenAction) {
-		Runnable[] actions = fOnOpenActionWithClose.get(name);
-		if (actions != null) {
-			Runnable[] moreActions = new Runnable[actions.length + 1];
-			System.arraycopy(actions, 0, moreActions, 0, actions.length);
-			actions = moreActions;
-		} else {
-			actions = new Runnable[1];
+		synchronized (fOnOpenActionWithClose) {
+			Runnable[] actions = fOnOpenActionWithClose.get(name);
+			if (actions != null) {
+				Runnable[] moreActions = new Runnable[actions.length + 1];
+				System.arraycopy(actions, 0, moreActions, 0, actions.length);
+				actions = moreActions;
+			} else {
+				actions = new Runnable[1];
+			}
+			actions[actions.length - 1] = onOpenAction;
+			fOnOpenActionWithClose.put(name, actions);
 		}
-		actions[actions.length - 1] = onOpenAction;
-		fOnOpenActionWithClose.put(name, actions);
 	}
 
 	/**
@@ -141,12 +163,15 @@ public class EntityWindowsStack {
 //					fDebugWindowNames.remove(entityWin.getName());
 					APLThread thread = debugTarget.getThread(entityWin.getThreadId());
 					// check if interpreter close window with recursive call function
-					boolean checkStackFrame = false;
-					if (thread.getStackFramesCount() > 1)
-						checkStackFrame = true;
+//					boolean checkStackFrame = false;
+//					if (thread.getStackFramesCount() > 1)
+//						checkStackFrame = true;
 					
-					if (thread.getIdentifier() != 0)
+					if (thread.getIdentifier() == 0) {
+						thread.resumeThread();
+					} else {
 						thread.setTerminate();
+					}
 
 //					if (checkStackFrame)
 //						debugTarget.getInterpreterWriter()
@@ -187,6 +212,9 @@ public class EntityWindowsStack {
 //		}
 //	}
 	
+	/**
+	 * Return opened non debug or without tracer entity window with specified name
+	 */
 	public EntityWindow getEntity (String name) {
 		synchronized (EntityWindowsLock) {
 //			Integer win = fWindowNames.get(name);
@@ -196,7 +224,7 @@ public class EntityWindowsStack {
 				for (int i : set) {
 					EntityWindow entityWin = fEntityWindows.get(i);
 					if (entityWin.getName().equals(name)
-							&& ! entityWin.isDebug()) {
+							&& ( ! entityWin.isDebug() || ! entityWin.isTracer())) {
 						return entityWin;
 					}
 				}
@@ -216,7 +244,7 @@ public class EntityWindowsStack {
 					EntityWindow entityWin = fEntityWindows.get(i);
 					if (entityWin.getName().equals(name)
 							&& entityWin.isDebug()
-							&& (threadId == entityWin.getThreadId() | threadId == -1)) {
+							&& (threadId == -1 || threadId == entityWin.getThreadId())) {
 						return entityWin;
 					}
 				}
@@ -225,5 +253,32 @@ public class EntityWindowsStack {
 //			return fEntityWindows.get(win);
 //		}
 	}
+
+	/**
+	 * Get entity by thread id number
+	 */
+	public EntityWindow getThreadEntity(int threadId) {
+		synchronized (fEntityWindows) {
+			Set <Integer> set = fEntityWindows.keySet();
+			for (int i : set) {
+				EntityWindow entityWin = fEntityWindows.get(i);
+				if (entityWin.isDebug() && entityWin.getThreadId() == threadId) {
+					return entityWin;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Change debug window tracer state
+	 */
+	public void changeTracer(int chgWin, int tracer) {
+		synchronized (fEntityWindows) {
+			EntityWindow entity = getEntity(chgWin);
+			entity.setTracer(tracer);
+		}
+	}
+
 }
 
