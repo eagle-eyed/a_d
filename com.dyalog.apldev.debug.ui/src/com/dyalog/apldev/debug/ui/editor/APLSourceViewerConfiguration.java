@@ -8,7 +8,7 @@ import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
 /**
  * Source view configuration for the PDA editor
  */
-public class PDASourceViewerConfiguration extends TextSourceViewerConfiguration {
+public class APLSourceViewerConfiguration extends TextSourceViewerConfiguration {
 
 	public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType) {
 		return new TextHover();
