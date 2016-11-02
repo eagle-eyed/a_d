@@ -1,9 +1,12 @@
 package com.dyalog.apldev.debug.core.model;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,7 +21,6 @@ import org.eclipse.debug.core.model.IThread;
 import org.eclipse.debug.core.model.IVariable;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindow;
@@ -61,25 +63,38 @@ public class APLThread extends APLDebugElement implements IThread,
 	 */
 	private Map<IStackFrame,IVariable[]> fVariables 
 		= new HashMap<IStackFrame, IVariable[]>();
-	// --
-//	private final String name;
+
 	public String name;
-//	private final PDAThreadStack stack;
-//	private IStackFrame[] theFrames;
 	private APLStackFrame[] theFrames;
 //	private final static IStackFrame[] NO_FRAMES = new IStackFrame[0];
 	// Reduce number of request to interpreter for retrieving StackFrame
 	private boolean fUpdate = false;
-	// delay for communication
-//	private int fStarting;
-//	private int finTSF;
-	// indicates that was pressed stepOver
-	private int fStepOver = -1;
+	/**
+	 * Whether the variables need refreshing
+	 */
+	private boolean fRefreshVariables;
+	/**
+	 * Collection of stack frames
+	 */
+	private List<APLStackFrame> fStackFrames;
 
+//	private final List<APLStackFrame> EMPTY_LIST = new ArrayList <APLStackFrame> ();
 	/**
 	 * Set top stack entity window (set by SetHighLightLine command)
 	 */
 	private int topStackWindowId;
+
+	/**
+	 * Whether children need to be refreshed. Set to true when stack frames are
+	 * re-used on the next suspend.
+	 */
+	private boolean fRefreshChildren = true;
+
+	private String[] fFramesData = new String[0];
+	/**
+	 * Whether terminated
+	 */
+	private boolean fTerminated;
 
 	
 	
@@ -90,9 +105,11 @@ public class APLThread extends APLDebugElement implements IThread,
 	 * @param target VM
 	 * @throws DebugException 
 	 */
-	public APLThread(APLDebugTarget target, int threadId, String tname) {
+	public APLThread(APLDebugTarget target, int threadId, String tname,
+			boolean suspended) {
 		super(target);
 		this.fThreadId = threadId;
+		this.fSuspended = suspended;
 //		getPDADebugTarget().addEventListener(this);
 		
 		this.name = tname;
@@ -102,9 +119,10 @@ public class APLThread extends APLDebugElement implements IThread,
 	 * Called by the debug target after the thread is created.
 	 */
 	void start() {
+		fStackFrames = new ArrayList <APLStackFrame>();
 		// create "Thread" DebugElement
 		fireCreationEvent();
-		getAPLDebugTarget().addEventListener(this);
+//		getAPLDebugTarget().addEventListener(this);
 	}
 //	public void setUpdateFrame() {
 //		fUpdate = true;
@@ -129,13 +147,21 @@ public class APLThread extends APLDebugElement implements IThread,
 		return null;
 	}
 	
-	public IStackFrame[] getStackFrames() throws DebugException {
-
-//		if (fUpdate) update();
-		if (isSuspended())
-			return theFrames != null ? theFrames : new IStackFrame[0];
-		else
-			return new IStackFrame[0];
+//	public IStackFrame[] getStackFrames() throws DebugException {
+//
+////		if (fUpdate) update();
+//		if (isSuspended())
+//			return theFrames != null ? theFrames : new IStackFrame[0];
+//		else
+//			return new IStackFrame[0];
+//	}
+	/**
+	 * Returns a copy of this thread's stack frames.
+	 */
+	@Override
+	public synchronized IStackFrame[] getStackFrames() throws DebugException {
+		List <APLStackFrame> list = computeStackFrames();
+		return list.toArray(new IStackFrame[list.size()]);
 	}
 	
 	public void update() throws DebugException {
@@ -145,18 +171,24 @@ public class APLThread extends APLDebugElement implements IThread,
 		}
 	}
 	
-	public IStackFrame getTopStackFrame() throws DebugException {
-		if (!isSuspended())
+	@Override
+	public synchronized IStackFrame getTopStackFrame() throws DebugException {
+		List <APLStackFrame> c = computeStackFrames();
+		if (c.isEmpty()) {
 			return null;
-
-//		if (fUpdate) update();
-//		IStackFrame[] frames = getStackFrames();
-//		if (fUpdate) update();
-		IStackFrame[] frames = theFrames;
-		if (frames != null && frames.length > 0) {
-			return frames[0];
 		}
-		return null;
+		return c.get(0);
+//		if (!isSuspended())
+//			return null;
+//
+////		if (fUpdate) update();
+////		IStackFrame[] frames = getStackFrames();
+////		if (fUpdate) update();
+//		IStackFrame[] frames = theFrames;
+//		if (frames != null && frames.length > 0) {
+//			return frames[0];
+//		}
+//		return null;
 	}
 
 	@Override
@@ -171,11 +203,12 @@ public class APLThread extends APLDebugElement implements IThread,
 
 	@Override
 	public boolean isSuspended() {
-		return fSuspended && !isTerminated();
+//		return fSuspended && !isTerminated();
+		return fSuspended && !fTerminated;
 	}
 
 	@Override
-	public void resume() throws DebugException {
+	public synchronized void resume() throws DebugException {
 		APLStackFrame frame = (APLStackFrame) getTopStackFrame();
 		EntityWindow entity = null;
 		if (frame != null) {
@@ -183,20 +216,15 @@ public class APLThread extends APLDebugElement implements IThread,
 			entity = entityWins.getDebugEntity(frame.getFunctionName(), fThreadId);
 		}
 		if (entity != null && entity.isDebug()) {
-			JSONArray cmd = new JSONArray();
-			cmd.put(0, "Continue");
-			JSONObject val = new JSONObject();
-			val.put("win", entity.token);
-			cmd.put(1, val);
-			APLDebugTarget target = (APLDebugTarget) getDebugTarget();
-			target.getInterpreterWriter()
-				.postCommand(cmd.toString());
+			if ( ! entity.isTracer()) {
+				((APLDebugTarget) getDebugTarget()).getInterpreterWriter().postCloseWindow(entity.token);
+			}
+			((APLDebugTarget) getDebugTarget()).getInterpreterWriter()
+				.postResume(entity.token);
 			resumed(DebugEvent.CLIENT_REQUEST);
 //			APLStackFrame[] frames = (APLStackFrame[]) getStackFrames();
-			for (APLStackFrame sFrame : theFrames) {
-				sFrame.terminateStack();
-			}
-			theFrames = new APLStackFrame[0];
+//			theFrames = new APLStackFrame[0];
+			preserveStackFrames();
 		}
 	}
 
@@ -230,30 +258,29 @@ public class APLThread extends APLDebugElement implements IThread,
 	@Override
 	public void stepInto() throws DebugException {
 		APLStackFrame frame = (APLStackFrame) getTopStackFrame();
+		if (frame == null) {
+			return;
+		}
 		EntityWindow entity = null;
 		if (frame != null) {
 			EntityWindowsStack entityWins = ((APLDebugTarget) getDebugTarget()).getEntityWindows();
 			entity = entityWins.getDebugEntity(frame.getFunctionName(), fThreadId);
 		}
 		if (entity != null && entity.isDebug()) {
-//			JSONArray cmd = new JSONArray();
-//			cmd.put(0, "StepInto");
-//			JSONObject val = new JSONObject();
-//			val.put("win", entity.token);
-//			cmd.put(1, val);
 			((APLDebugTarget) getDebugTarget()).getInterpreterWriter()
 				.postStepInto(entity.token);
-//				.postCommand(cmd.toString());
 			// Check if that is last function command 
-			if (entity.getLineNumber() == 0) {
-				// if window can close call event which need update stack frame
-				resumed(DebugEvent.CLIENT_REQUEST);
-			} else
+//			if (entity.getLineNumber() == 0) {
+//				// if window can close call event which need update stack frame
+//				resumed(DebugEvent.CLIENT_REQUEST);
+//			} else {
+				preserveStackFrames();
 				resumed(DebugEvent.STEP_INTO);
-			for (APLStackFrame sframe : theFrames) {
-				sframe.fireTerminateEvent();
-			}
-			theFrames = new APLStackFrame[0];
+//			}
+//			for (APLStackFrame sframe : theFrames) {
+//				sframe.fireTerminateEvent();
+//			}
+//			theFrames = new APLStackFrame[0];
 		}
 	}
 
@@ -266,21 +293,10 @@ public class APLThread extends APLDebugElement implements IThread,
 			entity = entityWins.getDebugEntity(frame.getFunctionName(), fThreadId);
 		}
 		if (entity != null && entity.isDebug()) {
-//			JSONArray cmd = new JSONArray();
-//			cmd.put(0, "RunCurrentLine");
-//			JSONObject val = new JSONObject();
-//			val.put("win", entity.token);
-//			cmd.put(1, val);
-//			APLDebugTarget target = (APLDebugTarget) getDebugTarget(); 
-//			target.getInterpreterWriter().postCommand(cmd.toString());
 			((APLDebugTarget) getDebugTarget()).getInterpreterWriter()
 				.postStepOver(entity.token);
-			// If it's last function command don't remember stack frame
-			if (entity.getLineNumber() == 0) {
-				resumed(DebugEvent.CLIENT_REQUEST);
-			} else {
-				resumed(DebugEvent.STEP_OVER);
-			}
+			preserveStackFrames();
+			resumed(DebugEvent.STEP_OVER);
 		}
 	}
 
@@ -294,15 +310,13 @@ public class APLThread extends APLDebugElement implements IThread,
 			entity = entityWins.getDebugEntity(frame.getFunctionName(), fThreadId);
 		}
 		if (entity != null && entity.isDebug()) {
-
-//		JSONArray cmd = new JSONArray();
-//		cmd.put(0, "ContinueTrace");
-//		JSONObject val = new JSONObject();
-//		val.put("win", entity.token);
-//		cmd.put(1, val);
-		((APLDebugTarget) getDebugTarget()).getInterpreterWriter()
-			.postStepReturn(entity.token);
-//			.postCommand(cmd.toString());
+			if ( ! entity.isTracer()) {
+				((APLDebugTarget) getDebugTarget()).getInterpreterWriter().postCloseWindow(entity.token);
+			}
+			((APLDebugTarget) getDebugTarget()).getInterpreterWriter()
+					.postStepReturn(entity.token);
+			preserveStackFrames();
+			resumed(DebugEvent.STEP_OVER);
 		}	
 	}
 
@@ -316,7 +330,7 @@ public class APLThread extends APLDebugElement implements IThread,
 		theFrames[theFrames.length - Id - 1].stepReturn();
 	}
 
-	public void dropToFrame() {
+	protected void dropToFrame() {
 		APLStackFrame frame;
 		try {
 			frame = (APLStackFrame) getTopStackFrame();
@@ -325,16 +339,17 @@ public class APLThread extends APLDebugElement implements IThread,
 			return;
 		}
 		if (frame != null) {
-			
 			EntityWindowsStack entityWins = ((APLDebugTarget) getDebugTarget()).getEntityWindows();
 			EntityWindow entity = entityWins.getDebugEntity(frame.getFunctionName(), fThreadId);
 			if (entity != null && entity.isDebug()) {
+				if ( ! entity.isTracer()) {
+					((APLDebugTarget) getDebugTarget()).getInterpreterWriter().postCloseWindow(entity.token);
+				}
 				((APLDebugTarget) getDebugTarget()).getInterpreterWriter()
 					.postCutback(entity.token);
-//					.postCommand("[\"Cutback\",{\"win\":" + topStackWindowId + "}]");
-//				fireChangeEvent(DebugEvent.RESUME);
-//				frame.Changed();
-				resumed(DebugEvent.CLIENT_REQUEST);
+				
+				preserveStackFrames();
+				resumed(DebugEvent.STEP_INTO);
 			}
 		}
 	}
@@ -348,7 +363,8 @@ public class APLThread extends APLDebugElement implements IThread,
 
 	@Override
 	public boolean isTerminated() {
-		return getDebugTarget().isTerminated();
+//		return getDebugTarget().isTerminated();
+		return fTerminated;
 	}
 
 	@Override
@@ -362,8 +378,16 @@ public class APLThread extends APLDebugElement implements IThread,
 	}
 	
 	public void setTerminate() {
+		setTerminated(true);
 		((APLDebugTarget) getDebugTarget()).RemoveThread(fThreadId);
 		fireTerminateEvent();
+	}
+	
+	/**
+	 * Sets whether this thread is terminated
+	 */
+	protected void setTerminated(boolean terminated) {
+		fTerminated = terminated;
 	}
 	
 	/**
@@ -383,6 +407,9 @@ public class APLThread extends APLDebugElement implements IThread,
 	 */
 	private void setSuspended(boolean suspended) {
 		fSuspended = suspended;
+		if (!fSuspended) {
+			fBreakpoint = null;
+		}
 	}
 	
 	/**
@@ -416,9 +443,9 @@ public class APLThread extends APLDebugElement implements IThread,
 			setSuspended(false);
 			if (event.endsWith("step")) {
 				setStepping(true);
-				if (fStepOver > 0) 
-					resumed(DebugEvent.STEP_OVER);
-				else
+//				if (fStepOver > 0) 
+//					resumed(DebugEvent.STEP_OVER);
+//				else
 					resumed(DebugEvent.STEP_INTO);
 			} else if (event.endsWith("client")) {
 				resumed(DebugEvent.CLIENT_REQUEST);
@@ -636,6 +663,113 @@ public class APLThread extends APLDebugElement implements IThread,
 	 */
 	public int getTopStackWindowId() {
 		return topStackWindowId;
+	}
+	
+	
+	/**
+	 * Returns this thread's current stack frames as a list
+	 * <p>
+	 * Before a thread is resumed a call must be made to one of:
+	 * preserveStackFrames()
+	 * disposeStackFrames()
+	 */
+	public synchronized List <APLStackFrame> computeStackFrames() throws DebugException {
+		return computeStackFrames(fRefreshChildren);
+	}
+	
+	protected synchronized List<APLStackFrame> computeStackFrames(boolean refreshChildren) 
+			throws DebugException {
+		if (isSuspended()) {
+			if (isTerminated()) {
+				fStackFrames.clear();
+			} else if (refreshChildren) {
+				String[] frames = getFrames();
+				int oldSize = fStackFrames.size();
+				int newSize = frames.length;
+				// number of old frames to discard
+				int discard = oldSize - newSize;
+				for (int i = 0; i < discard; i++) {
+					APLStackFrame invalid = fStackFrames.remove(0);
+					invalid.bind(null, -1);
+				}
+				// number of frames to create
+				int newFrames = newSize - oldSize;
+				int depth = oldSize;
+				for (int i = newFrames - 1; i >= 0; i--) {
+					fStackFrames.add(0, new APLStackFrame(this,
+							frames[i], depth));
+					depth++;
+				}
+				// number of frames to attempt to re-bind
+				int numToRebind = Math.min(newSize, oldSize);
+				int offset = newSize - 1;
+				for (depth = 0; depth < numToRebind; depth++) {
+					APLStackFrame oldFrame = fStackFrames.get(offset);
+					String frame = frames[offset];
+					APLStackFrame newFrame = oldFrame.bind(frame, depth);
+					if (newFrame != oldFrame) {
+						fStackFrames.set(offset, newFrame);
+					}
+					offset--;
+				}
+			}
+			fRefreshChildren = false;
+		} else {
+			return Collections.emptyList();
+//			return EMPTY_LIST;
+		}
+		return fStackFrames;
+	}
+	
+	/**
+	 * Return string array with stack frames
+	 */
+	public String[] getFrames() {
+		if (fFramesData == null)
+			return null;
+		synchronized (fFramesData) {
+			String[] frames = new String[fFramesData.length];
+			System.arraycopy(fFramesData, 0, frames, 0, frames.length);
+			return frames;
+		}
+	}
+	
+	/**
+	 * Set string array with stack frames
+	 */
+	public void setFramesData(String[] data) {
+		synchronized (fFramesData) {
+			fFramesData = data;
+		}
+	}
+	
+	/**
+	 * Preserves stack frames to be used on the next suspend event
+	 */
+	private synchronized void preserveStackFrames() {
+		fRefreshChildren = true;
+		if (fStackFrames == null)
+			return;
+		for (APLStackFrame frame : fStackFrames) {
+			((APLStackFrame) frame).setUnderlyingStackFrame(null);
+		}
+	}
+	
+	/**
+	 * Dispose stack frames and fire resume debug event for hiding stack frames
+	 */
+	public synchronized void resumeThread() {
+//		preserveStackFrames();
+		disposeStackFrames();
+		fireResumeEvent(DebugEvent.CLIENT_REQUEST);
+	}
+	
+	/**
+	 * Disposes stack frames, to be completely re-computed on the next suspend event.
+	 */
+	protected synchronized void disposeStackFrames() {
+		fStackFrames.clear();
+		fRefreshChildren = true;
 	}
 	
 	public void setStackFrame(JSONArray stack) {

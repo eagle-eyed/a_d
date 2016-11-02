@@ -195,13 +195,13 @@ public class DebuggerWriter implements Runnable {
 	 * @param cmd
 	 */
 	public synchronized void postCommand(String cmd, ReplyRequest replyRequest) {
-		boolean sendInCmdQueueThred = false;
-		if (sendInCmdQueueThred) {
-			synchronized (cmdQueue) {
-				cmdQueue.add(cmd);
-	//			fConsoles.appendSendRide(cmd," queue");
-			}
-		}
+//		boolean sendInCmdQueueThred = false;
+//		if (sendInCmdQueueThred) {
+//			synchronized (cmdQueue) {
+//				cmdQueue.add(cmd);
+//	//			fConsoles.appendSendRide(cmd," queue");
+//			}
+//		}
 
 		try {
 			byte[] payload;
@@ -337,7 +337,8 @@ public class DebuggerWriter implements Runnable {
 	 */
 	public void postCloseWindow(int win) {
 		EntityWindow entityWin = fDebugTarget.getEntityWindows().getEntity(win);
-		if (entityWin != null) {
+		if (entityWin != null && 
+				! (entityWin.isDebug() && ! entityWin.isTracer())) {
 			entityWin.setClosed();
 		}
 		JSONArray cmd = new JSONArray();
@@ -383,6 +384,17 @@ public class DebuggerWriter implements Runnable {
 		postCommand(cmd.toString());
 	}
 
+	public void postSave(int token, String[] text, Integer[] stop) {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "SaveChanges");
+		JSONObject val = new JSONObject();
+		val.put("win", token);
+		val.put("text", text);
+		val.put("stop", stop);
+		cmd.put(1, val);
+		postCommand(cmd.toString());
+	}
+	
 	public void postCutback(int token) {
 		JSONArray cmd = new JSONArray();
 		cmd.put(0, "Cutback");
@@ -429,5 +441,27 @@ public class DebuggerWriter implements Runnable {
 		val.put("unsaved", new JSONObject());
 		cmd.put(1, val);
 		postCommand(cmd.toString());
+	}
+
+	public void postResume(int token) {
+		JSONArray cmd = new JSONArray();
+		cmd.put(0, "Continue");
+		JSONObject val = new JSONObject();
+		val.put("win", token);
+		cmd.put(1, val);
+		postCommand(cmd.toString());
+	}
+
+	public void postLineAttributes(int token, int nLines, int[] stop, int[] trace, int[] monitor) {
+		JSONArray cmdSet = new JSONArray();
+		JSONObject valSet = new JSONObject();
+		cmdSet.put(0, "SetLineAttributes");
+		valSet.put("win", token);
+		valSet.put("nLines", nLines);
+		valSet.put("stop", stop);
+		valSet.put("trace", trace);
+		valSet.put("monitor", monitor);
+		cmdSet.put(1, valSet);
+		postCommand(cmdSet.toString());
 	}
 }
