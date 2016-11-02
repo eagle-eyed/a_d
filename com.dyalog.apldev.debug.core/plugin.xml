@@ -24,7 +24,7 @@
    <extension
          point="org.eclipse.debug.core.sourcePathComputers">
       <sourcePathComputer
-            class="com.dyalog.apldev.debug.core.sourcelookup.PDASourcePathComputerDelegate"
+            class="com.dyalog.apldev.debug.core.sourcelookup.APLSourcePathComputerDelegate"
             id="pda.sourcePathComputer">
       </sourcePathComputer>
    </extension>

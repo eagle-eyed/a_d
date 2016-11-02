@@ -22,7 +22,7 @@
          point="org.eclipse.debug.ui.launchShortcuts">
       <shortcut
             class="com.dyalog.apldev.debug.ui.launcher.APLLaunchShortcut"
-            icon="icons/full/obj16/A16.png"
+            icon="icons/obj16/A16.png"
             id="pda.launchShortcut"
             label="APL Application"
             modes="run, debug">

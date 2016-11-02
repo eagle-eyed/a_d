@@ -656,7 +656,9 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 			fProcess = null;
 		}
 
-		fConsoles.terminate();
+		if (fConsoles != null) {
+			fConsoles.terminate();
+		}
 		fireTerminateEvent();
 //		fireEvent(new DebugEvent(this, DebugEvent.TERMINATE));
 	}
@@ -851,12 +853,12 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 			return;
 		fStarted = true;
 //		createThread
-		CreateThread(0, "Tid:0");
+		CreateThread(0, "Tid:0", false);
 
 		// Load source files into workspace
 		LoadProject(fProject);
 
-		installDeferredBreakpoints();
+//		installDeferredBreakpoints();
 
 		startModule(mainModule);
 	}
@@ -955,20 +957,45 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 	public boolean loadToWorkspace(final String[] text, final String name) {
 		if (name == null || name.length() == 0)
 			return false;
+		// get breakpoints for current function from breakpoints manager
+		List <Integer> stopList = new ArrayList <> ();
+		IBreakpoint[] breakpoints = getBreakpointManager().getBreakpoints(APLDebugCorePlugin.ID_APL_DEBUG_MODEL);
+		for (int i = 0; i < breakpoints.length; i++) {
+			if (breakpoints[i] instanceof APLLineBreakpoint) {
+				APLLineBreakpoint breakpoint = (APLLineBreakpoint) breakpoints[i];
+				IResource resource = breakpoint.getMarker().getResource();
+				if (fProject.equals(breakpoint.getMarker().getResource().getProject())) {
+					String resName = resource.getName();
+					int extLen = resource.getFileExtension().length();
+					if (extLen > 0) {
+						resName = resName.substring(0, resName.length() - 1 - extLen);
+					}
+					if (name.equals(resName)) {
+						try {
+							stopList.add(breakpoint.getLineNumber() - 1);
+						} catch (CoreException e) {
+						}
+					}
+				}
+			}
+		}
+		Integer[] stops = new Integer[stopList.size()];
+		stopList.toArray(stops);
 		// Check if function window already opened
 		EntityWindowsStack entityWins = getEntityWindows();
 		EntityWindow entityWin = entityWins.getEntity(name);
 		if (entityWin != null && ! entityWin.isClosed()) {
-			getInterpreterWriter().postSave(entityWin.token, text, entityWin.getStop());
+			getInterpreterWriter().postSave(entityWin.token, text, stops);
+			if ( ! entityWin.isTracer()) {
+				getInterpreterWriter().postCloseWindow(entityWin.token);
+			}
 		} else {
 			Runnable saveOnOpen = new Runnable() {
-				public void Runnable () {
-					
-				}
+
 				@Override
 				public void run() {
 					EntityWindow entity = entityWins.getEntity(name);
-					getInterpreterWriter().postSave(entity.token, text, entity.getStop());
+					getInterpreterWriter().postSave(entity.token, text, stops);
 				}
 			};
 			entityWins.addOnOpenActionWithClose(name, saveOnOpen);
@@ -1270,7 +1297,10 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 	}
 	
 	public String getValueTip(final String functionName, String line, int pos, int maxWidth, int maxHeight) {
-		EntityWindow entityWin = entityWindowsStack.getEntity(functionName);
+		EntityWindow entityWin = entityWindowsStack.getDebugEntity(functionName, -1);
+		if (entityWin == null) {
+			entityWin = entityWindowsStack.getEntity(functionName);
+		}
 		if (entityWin == null) {
 			final ReplyEditRequest request = new ReplyEditRequest(this);
 			Runnable valueOnOpen = new Runnable() {
@@ -1399,7 +1429,7 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 			int tid = val.getInt("tid");
 			APLThread thread = getThread(tid);
 			if (thread == null) {
-				thread = CreateThread(tid,"Tid:"+tid);
+				thread = CreateThread(tid,"Tid:"+tid, true);
 			}
 			thread.setStackFrame(stack);
 			if (!thread.isSuspended())
@@ -1553,14 +1583,14 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 	public void updateThread(int tid, String tname) {
 		APLThread thread = getThread(tid);
 		if (thread == null) {
-			CreateThread(tid, tname);
+			CreateThread(tid, tname, true);
 		}
 		else
 			thread.setName(tname);
 	}
 	
-	private APLThread CreateThread(int tid, String tname) {
-		APLThread thread = new APLThread(this, tid, tname);
+	private APLThread CreateThread(int tid, String tname, boolean suspended) {
+		APLThread thread = new APLThread(this, tid, tname, suspended);
 		fThreads.put(tid, thread);
 		thread.start();
 		return thread;
@@ -1644,16 +1674,16 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 			fWriter.postSessionPrompt(prompt);
 	}
 	
-	public void initialize() {
-		fWriter.postCommand("SupportedProtocols=2");
-		fWriter.postCommand("UsingProtocol=2");
-		fWriter.postCommand("[\"Identify\",{\"identity\":1}]");
-		fWriter.postCommand("[\"Connect\",{\"remoteId\":2}]");
-		fWriter.postCommand("[\"GetWindowLayout\",{}]");
-		fWriter.postCommand("[\"SetPW\",{\"pw\":80}]");
-
-		
-	}
+//	public void initialize() {
+//		fWriter.postCommand("SupportedProtocols=2");
+//		fWriter.postCommand("UsingProtocol=2");
+//		fWriter.postCommand("[\"Identify\",{\"identity\":1}]");
+//		fWriter.postCommand("[\"Connect\",{\"remoteId\":2}]");
+//		fWriter.postCommand("[\"GetWindowLayout\",{}]");
+//		fWriter.postCommand("[\"SetPW\",{\"pw\":80}]");
+//
+//		
+//	}
 
 	public void setConsoleInterpter(AplDevConsoleInterpreter consoleInterpreter) {
 		this.consoleInterpreter = consoleInterpreter;
@@ -1738,6 +1768,29 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 					}
 				}
 			}
+		}
+	}
+
+	public void setStackFrame(StackData stackData) {
+		APLThread thread = getThread(stackData.getThreadId());
+		if (thread == null) {
+			// create new thread
+			if (thread == null) {
+				EntityWindow entityWin = getEntityWindows()
+						.getThreadEntity(stackData.getThreadId());
+				thread = CreateThread(tid,entityWin.getThreadName(), true);
+			}
+		}
+		thread.setFramesData(stackData.getData());
+		if (thread.isSuspended()) {
+			try {
+				thread.computeStackFrames(true);
+				thread.fireSuspendEvent(DebugEvent.CONTENT);
+			} catch (DebugException e) {
+			}
+		} else {
+			thread.fireSuspendEvent(DebugEvent.CLIENT_REQUEST);
+//			thread.handleEvent("suspended client");
 		}
 	}
 	
