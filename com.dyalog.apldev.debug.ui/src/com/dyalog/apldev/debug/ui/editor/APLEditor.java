@@ -11,17 +11,19 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.PartInitException;
-
+import org.eclipse.ui.editors.text.StorageDocumentProvider;
 //import org.eclipse.jface.action.IAction;
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditor;
 //import org.eclipse.ui.texteditor.ContentAssistAction;
 //import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
+import org.eclipse.ui.texteditor.IDocumentProvider;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
@@ -35,16 +37,47 @@ import com.dyalog.apldev.debug.ui.APLDebugUIPlugin;
 public class APLEditor extends AbstractDecoratedTextEditor {
 //public class APLEditor extends TextEditor {
 
+	private IDocumentProvider fDocumentProvider;
+
 	/**
 	 * Creates a APL editor
 	 */
 	public APLEditor() {
 		super();
-		setSourceViewerConfiguration(new PDASourceViewerConfiguration());
+		setSourceViewerConfiguration(new APLSourceViewerConfiguration());
 		setRulerContextMenuId("apl.editor.rulerMenu");
 		setEditorContextMenuId("apl.editor.editorMenu");
 		
 	}
+	
+	@Override
+	protected void setDocumentProvider(IEditorInput input) {
+		if (input instanceof WorkspaceEditorInput) {
+//			super.setDocumentProvider(input);
+			fDocumentProvider = new WorkspaceDocumentProvider();
+		} else {
+			super.setDocumentProvider(input);
+			fDocumentProvider = super.getDocumentProvider();
+		}
+	}
+	
+	@Override
+	public IDocumentProvider getDocumentProvider() {
+		return fDocumentProvider;
+//		IDocumentProvider provider = super.getDocumentProvider();
+//		if (provider == null) {
+//			if (fDocumentProvider == null
+//					&& getEditorInput() instanceof WorkspaceEditorInput) {
+//				fDocumentProvider = new StorageDocumentProvider();
+//			}
+//			return fDocumentProvider;
+//		}
+//		return provider;
+	}
+//	@Override
+//	protected IAnnotationModel createAnotationModel(Object element) throws CoreException {
+//		
+//	}
 	
 	@Override
 	public void init(IEditorSite site, IEditorInput input) throws PartInitException {
