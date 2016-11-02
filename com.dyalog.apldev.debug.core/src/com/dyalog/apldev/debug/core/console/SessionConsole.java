@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -94,7 +95,8 @@ public class SessionConsole {
 		ImageDescriptor descR = getImageDesc("icons/cubeR.ico");
 		String name = target.getName();
 		ILaunch launch = target.getLaunch();
-		String timeStamp = launch.getAttribute(DebugPlugin.ATTR_LAUNCH_TIMESTAMP);
+//		String timeStamp = launch.getAttribute(DebugPlugin.ATTR_LAUNCH_TIMESTAMP);
+		String timeStamp = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).format(new Date(System.currentTimeMillis()));
 		ILaunchConfiguration conf = launch.getLaunchConfiguration();
 		boolean enableRIDEConsole;
 		try {

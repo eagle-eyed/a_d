@@ -53,7 +53,7 @@ public class APLDebugCorePlugin extends Plugin {
 	public static final String ATTR_PROJECT_NAME = PLUGIN_ID + ".ATTR_PROJECT";
 	public static final String ATTR_MAINMODULE = PLUGIN_ID + ".ATTR_MAINMODULE";
 	public static final String ATTR_INTERPRETER = PLUGIN_ID + ".INTERPRETER";
-	public static final Object MODULES_EXTENSION = "apl";
+	public static final String MODULES_EXTENSION = "apl";
 	
 	public static final String ATTR_WORKING_DIRECTORY = PLUGIN_ID + ".ATTR_WORKING_DIRECTORY";
 //	public static final String ATTR_DEFAULT_WORKING_DIRECTORY = PLUGIN_ID + ".ATTR_DEFAULT_WORKING_DERECTORY";
@@ -65,6 +65,7 @@ public class APLDebugCorePlugin extends Plugin {
 	public static final String ATTR_INTERPRETER_CONNECT = PLUGIN_ID + ".ATTR_INTERPRETER_CONNECT";
 	public static final String FUNCTION_EDITOR_ID = "apl.editor";
 	public static final String ATTR_PROGRAM_ARGUMENTS = PLUGIN_ID + ".PROGRAM_ARGUMENTS";
+	public static final String ATTR_SHOW_RIDE = PLUGIN_ID + ".ATTR_SHOW_RIDE";
 	public static String ATTR_DEFAULT_INTERPRETER_PATH_WIN = "cmd /c start dyalog";
 	public static String ATTR_DEFAULT_INTERPRETER_PATH_LINUX = "xterm -e dyalog";
 	public static String ATTR_DEFAULT_INTERPRETER_PATH_MACOSX = "dyalog";
