@@ -9,11 +9,9 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.IStorageEditorInput;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
 
 //public class WorkspaceEditorInput implements IEditorInput {
@@ -24,6 +22,7 @@ public class WorkspaceEditorInput implements IStorageEditorInput {
 	private IProject fProject;
 	private ImageDescriptor fImageDscr;
 	private String fText;
+	private IStorage fStorage;
 	
 	public WorkspaceEditorInput (EntityWindow entity, APLDebugTarget debugTarget) {
 		this.entity = entity;
@@ -108,29 +107,37 @@ public class WorkspaceEditorInput implements IStorageEditorInput {
 
 	@Override
 	public IStorage getStorage() throws CoreException {
-		return new IStorage () {
-			
-			public InputStream getContents() throws CoreException {
-				return new ByteArrayInputStream(fText.getBytes(StandardCharsets.UTF_8));
-			}
-			
-			public IPath getFullPath() {
-				return null;
-			}
-			
-			public String getName() {
-				return WorkspaceEditorInput.this.getName();
-			}
-			
-			public boolean isReadOnly() {
-				return WorkspaceEditorInput.this.isReadOnly();
-			}
+		if (fStorage == null) {
+			fStorage = new IStorage () {
+//				String text = new String(fText);
+				@Override
+				public InputStream getContents() throws CoreException {
+					return new ByteArrayInputStream(fText.getBytes(StandardCharsets.UTF_8));
+				}
 
-			@Override
-			public <T> T getAdapter(Class<T> adapter) {
-				return null;
-			}
-		};
+				@Override
+				public IPath getFullPath() {
+					return null;
+				}
+
+				@Override
+				public String getName() {
+					return WorkspaceEditorInput.this.getName();
+				}
+
+				@Override
+				public boolean isReadOnly() {
+					return WorkspaceEditorInput.this.isReadOnly();
+				}
+
+				@Override
+				public <T> T getAdapter(Class<T> adapter) {
+					return null;
+				}
+			};
+
+		}
+		return fStorage;
 	}
 
 }
