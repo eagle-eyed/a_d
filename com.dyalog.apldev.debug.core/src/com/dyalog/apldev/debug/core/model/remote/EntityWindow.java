@@ -34,6 +34,7 @@ public class EntityWindow {
 	private int lineNum;
 	private Object lock = new Object();
 	private boolean fClosed;
+	private boolean tracer;
 	
 
 	public EntityWindow(int currentRow, boolean debugger, int entityType, String name, int offset, boolean readOnly,
@@ -50,6 +51,7 @@ public class EntityWindow {
 		this.tid = tid;
 		this.tname = tname;
 		this.token = token;
+		this.tracer = debugger;
 	}
 
 	public int getThreadId() {
@@ -184,4 +186,21 @@ public class EntityWindow {
 		return fClosed;
 	}
 
+	public boolean isReadOnly() {
+		return readOnly;
+	}
+
+	/**
+	 * Change debug window tracer state
+	 */
+	public void setTracer(int tracer) {
+		this.tracer = tracer == 0 ? false : true;
+	}
+
+	/**
+	 * Check if debug window has tracer state
+	 */
+	public boolean isTracer() {
+		return tracer;
+	}
 }

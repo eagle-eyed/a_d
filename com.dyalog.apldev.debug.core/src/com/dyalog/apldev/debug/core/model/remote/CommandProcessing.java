@@ -246,6 +246,8 @@ public class CommandProcessing implements Runnable {
 
 				break;
 			case "GotoWindow":
+				int win = cmdVal.getInt("win");
+				fDebugTarget.getEntityWindows().GotoWindowAction(win);
 				CheckIfReply(cmdJ, "Edit");
 				break;
 			case "ReplySaveChanges":
@@ -260,18 +262,21 @@ public class CommandProcessing implements Runnable {
 				break;
 			case "CloseWindow":
 				try {
-					int win = cmdVal.getInt("win");
-					fDebugTarget.getEntityWindows().remove(win);
+					int closeWin = cmdVal.getInt("win");
+					fDebugTarget.getEntityWindows().remove(closeWin);
 				} catch (JSONException e) {
 					
 				}
 				CheckIfReply(cmdJ, "CloseWindow");
 				processCloseWindow(cmdVal);
 				break;
+			case "WindowTypeChanged":
+				WindowTypeChanged(cmdVal);
+				break;
 			case "SetHighlightLine":
-				int win = cmdVal.getInt("win");
+				int sourceWin = cmdVal.getInt("win");
 				int line = cmdVal.getInt("line");
-				new DebugTargetEvent(new CIPEvent(cmdJ, win, line));
+				new DebugTargetEvent(new CIPEvent(cmdJ, sourceWin, line));
 				break;
 			case "HadError":
 				int err = cmdVal.getInt("error");
@@ -298,8 +303,8 @@ public class CommandProcessing implements Runnable {
 						action.run();
 					}
 				}
-
-				fDebugTarget.setStackFrame(cmdJ);
+				fDebugTarget.setStackFrame(stackData);
+//				fDebugTarget.setStackFrame(cmdJ);
 				CheckIfReply(cmdJ, "GetSIStack");
 				break;
 			case "Disconnect":
@@ -323,6 +328,12 @@ public class CommandProcessing implements Runnable {
 		} catch (JSONException e) {
 			
 		}
+	}
+
+	private void WindowTypeChanged(JSONObject cmdVal) throws JSONException {
+		int chgWin = cmdVal.getInt("win");
+		int tracer = cmdVal.getInt("tracer");
+		fDebugTarget.getEntityWindows().changeTracer(chgWin, tracer);
 	}
 
 	/**
