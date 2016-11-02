@@ -1,6 +1,7 @@
 package com.dyalog.apldev.debug.ui.presentation;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IBreakpoint;
@@ -14,11 +15,13 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.part.FileEditorInput;
 
+import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.breakpoints.APLLineBreakpoint;
 import com.dyalog.apldev.debug.core.model.APLDataStackValue;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
 import com.dyalog.apldev.debug.core.model.APLStackFrame;
 import com.dyalog.apldev.debug.core.model.APLThread;
+import com.dyalog.apldev.debug.core.model.remote.WorkspaceEditorInput;
 import com.dyalog.apldev.debug.ui.APLDebugUIPlugin;
 
 /**
@@ -66,6 +69,8 @@ public class APLModelPresentation extends LabelProvider implements
 	public IEditorInput getEditorInput(Object element) {
 		if (element instanceof IFile) {
 			return new FileEditorInput((IFile) element);
+		} else if (element instanceof WorkspaceEditorInput) {
+			return (WorkspaceEditorInput) element;
 		} else if (element instanceof APLLineBreakpoint) {
 //			APLLineBreakpoint breakpoint = (APLLineBreakpoint) element;
 			// check if that is interpreter workspace resource
@@ -78,8 +83,11 @@ public class APLModelPresentation extends LabelProvider implements
 
 	public String getEditorId(IEditorInput input, Object element) {
 		if (element instanceof IFile || element instanceof ILineBreakpoint) {
-			return "apl.editor";
-		} else {
+			return APLDebugCorePlugin.FUNCTION_EDITOR_ID;
+		} else if (element instanceof WorkspaceEditorInput) {
+			return APLDebugCorePlugin.FUNCTION_EDITOR_ID;
+		}
+		else {
 			System.out.println("Model for non file source?");
 		}
 		return null;
