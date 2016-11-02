@@ -13,12 +13,10 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.ICoreRunnable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.LineBreakpoint;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
@@ -27,19 +25,12 @@ import com.dyalog.apldev.debug.core.model.APLThread;
 import com.dyalog.apldev.debug.core.model.IAPLEventListener;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindow;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindowsStack;
-import com.dyalog.apldev.debug.core.model.remote.ReplyRequest;
 
 public class APLLineBreakpoint extends LineBreakpoint implements
 		IAPLEventListener {
 
-	// target currently installed in
-	private APLDebugTarget fDebugTarget;
-	/**
-	 * Function name
-	 */
-	private String fName;
-	private int lineNumber;
-	
+	APLDebugTarget fDebugTarget;
+	int[] EMPTY = new int[0];
 	/**
 	 * Default constructor is required for the breakpoint manager
 	 * to re-create persisted breakpoints. After instantiating a breakpoint,
@@ -76,8 +67,6 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 			}
 		};
 		run(getMarkerRule(resource), runnable);
-		this.lineNumber = lineNumber;
-//		name = ;
 	}
 	
 	public String getModelIdentifier() {
@@ -129,14 +118,15 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 			text = new String[0];
 		}
 		final String name = resName;
-		// Check if function already opened by interpreter
+		// Check if function already opened by interpreter in debug window
 		EntityWindowsStack entityWins = target.getEntityWindows();
-		EntityWindow entityWin = entityWins.getEntity(name);
+		EntityWindow entityWin = entityWins.getDebugEntity(name, -1);
 		if (entityWin != null && ! entityWin.isClosed()) {
 			if (entityWin.addStop(getLineNumber() - 1)) {
 				setBreakpointList(target, entityWin, text);
 			}
 		} else {
+			// Check if function already opened by interpreter in edit or debug window without tracer
 			entityWin = entityWins.getEntity(name);
 			if (entityWin != null && ! entityWin.isClosed()) {
 				if (entityWin.addStop(getLineNumber() - 1)) {
@@ -144,7 +134,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 				}
 			} else {
 				// open window with function
-				lineNumber = getLineNumber();
+				int lineNumber = getLineNumber();
 				Runnable addBPonOpen = new Runnable() {
 					@Override
 					public void run() {
@@ -231,7 +221,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 				}
 			} else {
 				// open window with function
-				lineNumber = getLineNumber();
+				int lineNumber = getLineNumber();
 				Runnable removeBPonOpen = new Runnable() {
 					@Override
 					public void run() {
@@ -263,18 +253,21 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 	
 	private void setBreakpointList(APLDebugTarget target, EntityWindow entityWin, String[] text) {
 		if (target != null && entityWin != null) {
-			if (entityWin.isDebug()) {
+			if (entityWin.isDebug() & entityWin.isTracer()) {
 				// interpreter open debugger window
-				JSONArray cmdSet = new JSONArray();
-				JSONObject valSet = new JSONObject();
-				cmdSet.put(0, "SetLineAttributes");
-				valSet.put("win", entityWin.token);
-				valSet.put("nLines", entityWin.getTextAsArray().length);
-				valSet.put("stop", entityWin.getStop());
-				valSet.put("trace", new int[0]);
-				valSet.put("monitor", new int[0]);
-				cmdSet.put(1, valSet);
-				target.getInterpreterWriter().postCommand(cmdSet.toString());
+				target.getInterpreterWriter()
+					.postLineAttributes(entityWin.token, entityWin.getTextAsArray().length,
+							entityWin.getStop(), EMPTY, EMPTY);
+//				JSONArray cmdSet = new JSONArray();
+//				JSONObject valSet = new JSONObject();
+//				cmdSet.put(0, "SetLineAttributes");
+//				valSet.put("win", entityWin.token);
+//				valSet.put("nLines", entityWin.getTextAsArray().length);
+//				valSet.put("stop", entityWin.getStop());
+//				valSet.put("trace", new int[0]);
+//				valSet.put("monitor", new int[0]);
+//				cmdSet.put(1, valSet);
+//				target.getInterpreterWriter().postCommand(cmdSet.toString());
 			} else {
 //				JSONArray cmdSave = new JSONArray();
 //				JSONObject valSave = new JSONObject();
