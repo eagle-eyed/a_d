@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Interactive_console
+Bundle-SymbolicName: com.dyalog.apldev.interactive_console
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: com.dyalog.apldev.interactive_console.InteractiveConsolePlugin
+Bundle-Vendor: DYALOG
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ActivationPolicy: lazy
