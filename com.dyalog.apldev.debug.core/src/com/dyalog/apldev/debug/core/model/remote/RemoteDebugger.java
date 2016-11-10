@@ -13,6 +13,7 @@ import org.eclipse.debug.core.model.IProcess;
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.launcher.APLRunnerConfig;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
+import com.dyalog.apldev.log.Log;
 
 /**
  * Network interface to the debugger
@@ -75,8 +76,8 @@ public class RemoteDebugger {
 					String errorMessage = ip.getStreamsProxy().getErrorStreamMonitor()
 							.getContents();
 					if (errorMessage.length() != 0) {
-	                    throw new CoreException(APLDebugCorePlugin.makeStatus(IStatus.ERROR,
-	                            "Something got printed in the error stream", null));
+						throw new CoreException(Log.makeStatus(IStatus.ERROR,
+								"Something got printed in the error stream", null));
 					}
 				} catch (IllegalThreadStateException e) {
 					// expected while process is alive

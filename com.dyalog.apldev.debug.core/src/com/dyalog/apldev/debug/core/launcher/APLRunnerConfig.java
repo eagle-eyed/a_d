@@ -21,6 +21,7 @@ import org.eclipse.debug.core.ILaunchManager;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.model.remote.ListenConnector;
+import com.dyalog.apldev.log.Log;
 
 /**
  * Holds configuration for launching APL Interpreter
@@ -72,13 +73,13 @@ public class APLRunnerConfig {
 			throws CoreException {
 		String projName = conf.getAttribute(APLDebugCorePlugin.ATTR_PROJECT_NAME, "");
 		if (projName == null || projName.length() == 0) {
-			throw new CoreException(APLDebugCorePlugin.makeStatus(IStatus.ERROR,
+			throw new CoreException(Log.makeStatus(IStatus.ERROR,
 					"Unable to get project for the run", null));
 		}
 		IWorkspace w = ResourcesPlugin.getWorkspace();
 		IProject p = w.getRoot().getProject(projName);
 		if (p == null || !p.exists()) {
-			throw new CoreException(APLDebugCorePlugin.makeStatus(IStatus.ERROR,
+			throw new CoreException(Log.makeStatus(IStatus.ERROR,
 					"Could not get project: " + projName, null));
 		}
 		return p;
@@ -118,7 +119,7 @@ public class APLRunnerConfig {
 		try {
 			portNum = Integer.toString(getDebuggerListenConnector().getLocalPort());
 		} catch (IOException e) {
-			throw new CoreException(APLDebugCorePlugin.makeStatus(IStatus.ERROR,
+			throw new CoreException(Log.makeStatus(IStatus.ERROR,
 					"Unable to get port", e));
 		}
 		return portNum;

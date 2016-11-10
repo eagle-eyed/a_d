@@ -4,11 +4,11 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.console.IScriptConsoleViewer;
 import com.dyalog.apldev.debug.core.console.ScriptConsolePartitioner;
 import com.dyalog.apldev.debug.core.console.ScriptStyleRange;
 import com.dyalog.apldev.debug.core.content.TextSelectionUtils;
+import com.dyalog.apldev.log.Log;
 
 /**
  * Go to the strt of the line (Home)
@@ -62,7 +62,7 @@ public class HandleLineStartAction {
 			return true;
 			
 		} catch (BadLocationException e) {
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 		}
 		return false;
 	}

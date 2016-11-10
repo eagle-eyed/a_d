@@ -3,7 +3,7 @@ package com.dyalog.apldev.debug.core.console.actions;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
+import com.dyalog.apldev.log.Log;
 
 /**
  * Deletes the previous word (Ctrl + Backspace)
@@ -46,7 +46,7 @@ public class HandleDeletePreviousWord {
 		try {
 			doc.replace(caretPosition,  initialCaretPosition - caretPosition, "");
 		} catch (BadLocationException e) {
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 		}
 	}
 }

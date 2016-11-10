@@ -47,12 +47,12 @@ import org.eclipse.ui.internal.console.IOConsolePartitioner;
 import org.eclipse.ui.internal.console.IOConsoleViewer;
 import org.osgi.framework.Bundle;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
-import com.dyalog.apldev.debug.core.model.APLDebugTarget;
+import com.dyalog.apldev.interactive_console.InteractiveConsolePlugin;
+import com.dyalog.apldev.log.Log;
 
 public class SessionConsole {
 	
-	private APLDebugTarget fTarget;
+//	private APLDebugTarget fTarget;
 	// console
 	private IOConsole fConsoleSession;
 	private IOConsole fConsoleRIDE;
@@ -60,12 +60,10 @@ public class SessionConsole {
     private IOConsoleInputStream finSession;
     private PrintWriter fConsoleSessionWriter;
     private BufferedReader fConsoleSessionReader;
-    private ConsoleSessionReadJob fConsoleSessionReadJob;
     private IOConsoleOutputStream foutRIDE;
     private IOConsoleInputStream finRIDE;
     private PrintWriter fConsoleRIDEWriter;
     private BufferedReader fConsoleRIDEReader;
-    private ConsoleRIDEReadJob fConsoleRIDEReadJob;
 
 	private boolean fConsolesOpened = false;
 	private IOConsoleOutputStream fProcConsoleStdOut;
@@ -77,6 +75,7 @@ public class SessionConsole {
 	private IConsoleManager fConManager;
 	private IDocumentListener fRIDEListener;
 	private boolean fTerminated;
+	private IScriptConsoleInterpreter fConsoleInterpreter;
 
 	/**
 	 * @deprecated use instead isTerminated 
@@ -85,25 +84,27 @@ public class SessionConsole {
 		return fConsolesOpened;
 	}
 
-	public SessionConsole(APLDebugTarget target) throws DebugException {
-		this.fTarget = target;
+	public SessionConsole(IScriptConsoleInterpreter consoleInterpreter) throws DebugException {
+//		this.fTarget = target;
+		this.fConsoleInterpreter = consoleInterpreter;
 		this.fTerminated = false;
 		
 		Date date = new Date();
 		
 		// Create console for RIDE protocol
-		ImageDescriptor descR = getImageDesc("icons/cubeR.ico");
-		String name = target.getName();
-		ILaunch launch = target.getLaunch();
+		ImageDescriptor descR = InteractiveConsolePlugin.getDefault()
+				.getImageDescriptor(InteractiveConsolePlugin.RIDE_CONSOLE_ICON);
+		String name = consoleInterpreter.getName();
+//		ILaunch launch = target.getLaunch();
 //		String timeStamp = launch.getAttribute(DebugPlugin.ATTR_LAUNCH_TIMESTAMP);
 		String timeStamp = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).format(new Date(System.currentTimeMillis()));
-		ILaunchConfiguration conf = launch.getLaunchConfiguration();
+//		ILaunchConfiguration conf = launch.getLaunchConfiguration();
 		boolean enableRIDEConsole;
-		try {
-			enableRIDEConsole = conf.getAttribute(APLDebugCorePlugin.ATTR_SHOW_RIDE, false);
-		} catch (CoreException e) {
-			enableRIDEConsole = false;
-		}
+//		try {
+//			enableRIDEConsole = conf.getAttribute(APLDebugCorePlugin.ATTR_SHOW_RIDE, false);
+//		} catch (CoreException e) {
+			enableRIDEConsole = consoleInterpreter.isRIDEConsole();
+//		}
 		if (enableRIDEConsole) {
 			fConsoleRIDE = createConsole("RIDE: " + name, descR);
 			foutRIDE = fConsoleRIDE.newOutputStream();
@@ -116,9 +117,10 @@ public class SessionConsole {
 		}
 		
 		// Create session console
-		AplDevConsoleInterpreter consoleInterpreter = new AplDevConsoleInterpreter(fTarget);
-		fTarget.setConsoleInterpter(consoleInterpreter);
-		ImageDescriptor desc = APLDebugCorePlugin.getImageDescriptor("icons/cube.ico");
+//		AplDevConsoleInterpreter consoleInterpreter = new AplDevConsoleInterpreter(fTarget);
+//		fTarget.setConsoleInterpter(consoleInterpreter);
+		ImageDescriptor desc = InteractiveConsolePlugin.getDefault()
+				.getImageDescriptor(InteractiveConsolePlugin.CONSOLE_ICON);
 		fAplDevConsole = new AplDevConsole("Session: " + name + timeStamp, desc, consoleInterpreter);
 		fConManager = ConsolePlugin.getDefault().getConsoleManager();
 		fConManager.addConsoles(new IConsole[] {fAplDevConsole});
@@ -130,11 +132,6 @@ public class SessionConsole {
 		if ( ! isTerminated()) {
 			terminate();
 		}
-//		// Stop Dispatch Job
-//		if (fConsoleSessionReadJob != null)
-//			fConsoleSessionReadJob.stop();
-//		if (fConsoleRIDEReadJob != null)
-//			fConsoleRIDEReadJob.stop();
 		// console consoles
 		if (fConsolesOpened) {
 			fConsolesOpened = false;
@@ -151,24 +148,24 @@ public class SessionConsole {
 		IConsoleManager conMan = plugin.getConsoleManager();
 //		ImageDescriptor desc = getImageDesc("icons/favicon.ico");
 		Charset enc = StandardCharsets.UTF_8;
-		IOConsole console = new IOConsole(name, APLDebugCorePlugin.PLUGIN_ID , desc, enc.toString(), false);
+		IOConsole console = new IOConsole(name, InteractiveConsolePlugin.PLUGIN_ID , desc, enc.toString(), false);
 		conMan.addConsoles(new IConsole[] {console});
 		return console;
 	}
 
-	private ImageDescriptor getImageDesc(String path) {
-		ImageDescriptor desc = ImageDescriptor.getMissingImageDescriptor();
-//		Bundle bundle = Platform.getBundle(org.eclipse.debug.examples.core.pda.PLUGIN_ID);
-		Bundle bundle = Platform.getBundle(APLDebugCorePlugin.PLUGIN_ID);
-		URL url = null;
-		if (bundle != null) {
-			url = FileLocator.find(bundle, new Path(path), null);
-			if (url != null) {
-				desc = ImageDescriptor.createFromURL(url);
-			}
-		}
-		return desc;
-	}
+//	private ImageDescriptor getImageDesc(String path) {
+//		ImageDescriptor desc = ImageDescriptor.getMissingImageDescriptor();
+////		Bundle bundle = Platform.getBundle(org.eclipse.debug.examples.core.pda.PLUGIN_ID);
+//		Bundle bundle = Platform.getBundle(APLDebugCorePlugin.PLUGIN_ID);
+//		URL url = null;
+//		if (bundle != null) {
+//			url = FileLocator.find(bundle, new Path(path), null);
+//			if (url != null) {
+//				desc = ImageDescriptor.createFromURL(url);
+//			}
+//		}
+//		return desc;
+//	}
 
 	/**
 	 * Stop console interaction 
@@ -220,16 +217,14 @@ public class SessionConsole {
 								if (p.getType().equals(IOConsolePartition.INPUT_PARTITION_TYPE)) {
 									if (event.fText.length() <= 2) {
 										final String inputFound = p.getString();
-										fTarget.postRIDECommand(inputFound);
+										fConsoleInterpreter.postRIDECommand(inputFound);
 									}
 								}
 							}
 						} catch (BadLocationException e) {
-							APLDebugCorePlugin.log(IStatus.ERROR, "Error in RIDE console Listener.", e);
+							Log.log(IStatus.ERROR, "Error in RIDE console Listener.", e);
 						}
-						
 					}
-					
 				}
 	
 				@Override
@@ -244,12 +239,12 @@ public class SessionConsole {
 								if (p.getType().equals(IOConsolePartition.INPUT_PARTITION_TYPE)) {
 									if (event.fText.length() > 2) {
 										// user pasted something
-										fTarget.postRIDECommand(event.fText);
+										fConsoleInterpreter.postRIDECommand(event.fText);
 									}
 								}
 							}
 						} catch (BadLocationException e) {
-							APLDebugCorePlugin.log(IStatus.ERROR, "Can't listen what paste to RIDE console", e);
+							Log.log(IStatus.ERROR, "Can't listen what paste to RIDE console", e);
 						}
 					}
 					
@@ -279,12 +274,12 @@ public class SessionConsole {
 								if (event.fText.length() <= 2) {
 									final String inputFound = p.getString();
 									if (inputFound.length() > 0)
-										fTarget.postSessionPrompt(inputFound);
+										fConsoleInterpreter.postSessionPrompt(inputFound);
 								}
 							}
 						}
 					} catch (BadLocationException e) {
-						APLDebugCorePlugin.log(IStatus.ERROR, "Error in RIDE console Listener.", e);
+						Log.log(IStatus.ERROR, "Error in RIDE console Listener.", e);
 					}
 					
 				}
@@ -308,7 +303,7 @@ public class SessionConsole {
 							}
 						}
 					} catch (BadLocationException e) {
-						APLDebugCorePlugin.log(IStatus.ERROR, "Can't listen what paste to RIDE console", e);
+						Log.log(IStatus.ERROR, "Can't listen what paste to RIDE console", e);
 					}
 				}
 				
@@ -324,7 +319,7 @@ public class SessionConsole {
 	public void addProcessConsoleInputListener() {
 		boolean debug = true;
 		if (debug) return;
-		IConsole console = DebugUITools.getConsole(fTarget.getProcess());
+		IConsole console = DebugUITools.getConsole(fConsoleInterpreter.getProcess());
 		if (console instanceof ProcessConsole) {
 			final ProcessConsole c = (ProcessConsole) console;
 	        fProcConsoleStdOut = c.getStream(IDebugUIConstants.ID_STANDARD_OUTPUT_STREAM);
@@ -333,9 +328,7 @@ public class SessionConsole {
 				fConsoleProcWriter = new PrintWriter(new OutputStreamWriter(fProcConsoleStdOut,"UTF8"));
 //				fConsoleProcReader = new BufferedReader(new InputStreamReader(fProcConsoleIn,"UTF8"));
 			} catch (UnsupportedEncodingException e) {
-				APLDebugCorePlugin.getDefault().getLog().log(
-			            new Status (IStatus.ERROR, APLDebugCorePlugin.PLUGIN_ID,
-			            		"RIDE console unsupported encoding", e));
+				Log.log(IStatus.ERROR, "RIDE console unsupported encoding", e);
 			}
 
 //			final List<IConsoleInputListener> participants = ExtensionHelper
@@ -364,9 +357,7 @@ public class SessionConsole {
 								}
 							}
 						} catch (Exception e) {
-							APLDebugCorePlugin.getDefault().getLog().log(
-						            new Status (IStatus.ERROR, APLDebugCorePlugin.PLUGIN_ID,
-						            		"Error listen input for process console", e));
+							Log.log(IStatus.ERROR, "Error listen input for process console", e);
 						}
 					}
 				}
@@ -392,124 +383,32 @@ public class SessionConsole {
 								}
 							}
 						} catch (Exception e) {
-							APLDebugCorePlugin.getDefault().getLog().log(
-						            new Status (IStatus.ERROR, APLDebugCorePlugin.PLUGIN_ID,
-						            		"Error listen input for process console", e));
+							Log.log(IStatus.ERROR, "Error listen input for process console", e);
 						}
 					}
 				}
 			});
 		}
 	}
-
-
-	/**
-	 * Listens to input steam form the Session console
-	 */
-	class ConsoleSessionReadJob extends Job {
-		private boolean stop = false;
-
-		public void stop() {
-			this.stop = true;
-		}
-
-		public ConsoleSessionReadJob() {
-			super("Session console Dispatch");
-			setSystem(true);
-		}
-
-		@Override
-		protected IStatus run(IProgressMonitor monitor) {
-			String message = "";
-			while (!fTarget.isTerminated() && !stop) {
-				try {
-//					int c = finSession.read();
-//					if (c != -1)
-//						System.out.println(c);
-//					int n = finSession.available();
-					message = fConsoleSessionReader.readLine();
-					fTarget.postSessionPrompt(message);
-//					fConsoleRIDEWriter.println("S >> " + message);
-//					fConsoleRIDEWriter.flush();
-				} catch (IOException e) {
-					APLDebugCorePlugin.getDefault().getLog().log(
-				            new Status (IStatus.ERROR, APLDebugCorePlugin.PLUGIN_ID,
-				            		"Error reading session input", e));
-				        continue;
-				}
-			}
-			return Status.OK_STATUS;
-		}
-		
-	}
 	
-	public Job asJob() {
-		Job job = new Job("JRuby REPL") {
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				while (!monitor.isCanceled()) {
-					try {
-						fConsoleSessionReader.readLine();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-				}
-				return Status.OK_STATUS;
-			}
-		};
-		job.setSystem(true);
-		return job;
-	}
-	
-	/**
-	 * Listens to input steam form the Session console
-	 */
-	class ConsoleRIDEReadJob extends Job {
-
-		private boolean stop = false;
-
-		public void stop() {
-			this.stop = true;
-		}
-
-		public ConsoleRIDEReadJob() {
-			super("RIDE console Dispatch");
-			setSystem(true);
-		}
-
-		@Override
-		protected IStatus run(IProgressMonitor monitor) {
-			String message = "";
-			while (!fTarget.isTerminated() && !stop) {
-				try {
-//					int c = finRIDE.read();
-//					if (c != -1)
-//						System.out.println(c);
-//					int n = finRIDE.available();
-					message = fConsoleRIDEReader.readLine();
-					fConsoleSessionWriter.println("R >> " + message);
-					fConsoleSessionWriter.flush();
-					fTarget.postCommand(message);
+//	public Job asJob() {
+//		Job job = new Job("JRuby REPL") {
+//			@Override
+//			protected IStatus run(IProgressMonitor monitor) {
+//				while (!monitor.isCanceled()) {
 //					try {
-//						fTarget.sendRequestNoReply(message);
-//					} catch (DebugException e) {
-//						DebugCorePlugin.log(IStatus.ERROR,
-//								"Error sending message to Interpreter from RIDE console", e);
-//					        continue;
+//						fConsoleSessionReader.readLine();
+//					} catch (IOException e) {
+//
 //					}
-				} catch (IOException e) {
-					APLDebugCorePlugin.log(IStatus.ERROR,
-				            		"Error reading session input", e);
-				        continue;
-				}
-			}
-			return Status.OK_STATUS;
-		}
-		
-	}
-
+//				}
+//				return Status.OK_STATUS;
+//			}
+//		};
+//		job.setSystem(true);
+//		return job;
+//	}
+	
 	public void WriteRIDE(String message) {
 		if (fConsoleRIDEWriter != null) {
 			fConsoleRIDEWriter.println(message);
@@ -551,8 +450,7 @@ public class SessionConsole {
 					conMan.warnOfContentChange(fConsoleSession);
 
 				} catch (BadLocationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+
 				}
 			}
 		});

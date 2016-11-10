@@ -25,6 +25,7 @@ import com.dyalog.apldev.debug.core.model.APLThread;
 import com.dyalog.apldev.debug.core.model.IAPLEventListener;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindow;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindowsStack;
+import com.dyalog.apldev.log.Log;
 
 public class APLLineBreakpoint extends LineBreakpoint implements
 		IAPLEventListener {
@@ -178,7 +179,7 @@ public class APLLineBreakpoint extends LineBreakpoint implements
 			fileText.toArray(text);
 			return text;
 		} catch (IOException e) {
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 			return null;
 		}
 	}

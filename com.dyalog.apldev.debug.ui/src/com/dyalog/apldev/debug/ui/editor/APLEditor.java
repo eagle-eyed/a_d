@@ -30,6 +30,7 @@ import com.dyalog.apldev.debug.core.model.APLDebugTarget;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindow;
 import com.dyalog.apldev.debug.core.model.remote.WorkspaceEditorInput;
 import com.dyalog.apldev.debug.ui.APLDebugUIPlugin;
+import com.dyalog.apldev.log.Log;
 
 /**
  * APL editor
@@ -162,7 +163,7 @@ public class APLEditor extends AbstractDecoratedTextEditor {
 									doc.getLineLength(i) - delimiterLen);
 					}
 				} catch (BadLocationException e) {
-					APLDebugCorePlugin.log(e);
+					Log.log(e);
 					return;
 				}
 			}

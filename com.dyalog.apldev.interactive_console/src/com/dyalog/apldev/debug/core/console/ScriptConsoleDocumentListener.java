@@ -22,10 +22,10 @@ import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.content.StringUtils;
 import com.dyalog.apldev.debug.core.content.TextSelectionUtils;
 import com.dyalog.apldev.debug.core.content.Tuple;
+import com.dyalog.apldev.log.Log;
 
 /**
  * Listen to the document and will:
@@ -356,7 +356,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 					int len = doc.getLineLength(lastLine);
 					this.readOnlyColumnsInCurrentBeforePrompt = len;
 				} catch (BadLocationException e) {
-					APLDebugCorePlugin.log(e);
+					Log.log(e);
 				}
 			}
 		}
@@ -378,7 +378,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 						lineTracker.lineAppended(region);
 					}
 			} catch (Exception e) {
-				APLDebugCorePlugin.log(e);
+				Log.log(e);
 			}
 		}
 		revealEndOfDocument();
@@ -421,7 +421,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 		try {
 			doc.replace(initialOffset, 0, text);
 		} catch (BadLocationException e) {
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 		}
 	}
 	
@@ -509,7 +509,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 			}
 		} catch (BadLocationException e) {
 			text = "";
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 		}
 		
 		text = StringUtils.replaceNewLines(text, delim);
@@ -615,7 +615,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 			try {
 				strategy.customizeParenthesis(parenDoc, docCmd);
 			} catch (BadLocationException e) {
-				APLDebugCorePlugin.log(e);
+				Log.log(e);
 			}
 			newText = docCmd.text + newText.substring(1);
 			if (!docCmd.shiftsCaret) {
@@ -635,7 +635,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 					canSkipOpenParenthesis = strategy.canSkipCloseParenthesis(parenDoc, docCmd);
 				} catch (BadLocationException e) {
 					canSkipOpenParenthesis = false;
-					APLDebugCorePlugin.log(e);
+					Log.log(e);
 				}
 				if (canSkipOpenParenthesis) {
 					shiftsCaret = false;
@@ -671,7 +671,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 			commandLineOffset = getCommandLineOffset();
 			commandLineLength = getCommandLineLength();
 		} catch (BadLocationException e1) {
-			APLDebugCorePlugin.log(e1);
+			Log.log(e1);
 			return "";
 		}
 		if (commandLineLength < 0) {
@@ -683,7 +683,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 		} catch (BadLocationException e) {
 //			String msg = new FastStringBuffer(60).append("Error:bad location: offset:")
 //					.append(commandLineOffset).append(" text:").append(commLineLength).toString();
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 			return "";
 		}
 	}
@@ -765,12 +765,12 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 									// remove any new line added
 									finalIndentString[0] = docCmd.text.replaceAll("\\r\\n|\\n|\\r", "");
 									if (currHistoryLen != historyDoc.getLength()) {
-										APLDebugCorePlugin.log(IStatus.ERROR, "Error: the document passed to the customize NewLine should not be changed!", null);
+										Log.log(IStatus.ERROR, "Error: the document passed to the customize NewLine should not be changed!", null);
 									}
 								}
 							}
 						} catch (Throwable e) {
-							APLDebugCorePlugin.log(e);
+							Log.log(e);
 						}
 						if (currentCommand + 1 < commands.size()) {
 							execCommand(finalAddedNewLine, finalDelim, finalIndentString,
@@ -820,7 +820,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 			try {
 				readOnlyColumnsInCurrentBeforePrompt = getLastLineLength();
 			} catch (BadLocationException e) {
-				APLDebugCorePlugin.log(e);
+				Log.log(e);
 			}
 			if (!result.more) {
 				historyFullLine = history.getAsList().size();
@@ -895,7 +895,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 			try {
 				doc.replace(doc.getLength(), 0, this.initialCommands + "\n");
 			} catch (BadLocationException e) {
-				APLDebugCorePlugin.log(e);
+				Log.log(e);
 			}
 		}
 	}
@@ -914,7 +914,7 @@ public class ScriptConsoleDocumentListener implements IDocumentListener {
 			try {
 				doc.replace(doc.getLength(), 0, "\n");
 			} catch (BadLocationException e) {
-				APLDebugCorePlugin.log(e);
+				Log.log(e);
 			}
 			readOnlyColumnsInCurrentBeforePrompt = 0;
 			prompt.setMode(true);

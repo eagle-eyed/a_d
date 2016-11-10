@@ -22,6 +22,7 @@ import com.dyalog.apldev.debug.core.content.Tuple;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
 import com.dyalog.apldev.debug.core.protocol.APLEvent;
 import com.dyalog.apldev.debug.core.protocol.CIPEvent;
+import com.dyalog.apldev.log.Log;
 
 public class CommandProcessing implements Runnable {
 	
@@ -312,7 +313,7 @@ public class CommandProcessing implements Runnable {
 				try {
 					fDebugTarget.disconnect(message);
 				} catch (DebugException e) {
-					APLDebugCorePlugin.log(IStatus.ERROR, "Error disconnecting debug target after 'Disconnect' message", e);
+					Log.log(IStatus.ERROR, "Error disconnecting debug target after 'Disconnect' message", e);
 				}
 				break;
 			case "InvalidSyntax":
@@ -322,7 +323,7 @@ public class CommandProcessing implements Runnable {
 				try {
 					fDebugTarget.disconnect("SysError: " + text);
 				} catch (DebugException e) {
-					APLDebugCorePlugin.log(IStatus.ERROR, "Error disconnecting after 'SysError' message", e);
+					Log.log(IStatus.ERROR, "Error disconnecting after 'SysError' message", e);
 				}
 			}
 		} catch (JSONException e) {
@@ -552,7 +553,7 @@ public class CommandProcessing implements Runnable {
 						Thread.sleep(50);
 //					}
 				} catch (Exception e) {
-					APLDebugCorePlugin.log(e);
+					Log.log(e);
 				}
 			}
 

@@ -55,12 +55,12 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.TextConsole;
 import org.eclipse.ui.console.TextConsoleViewer;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.console.actions.AbstractHandleBackspaceAction;
 import com.dyalog.apldev.debug.core.console.actions.HandleDeletePreviousWord;
 import com.dyalog.apldev.debug.core.console.actions.HandleLineStartAction;
 import com.dyalog.apldev.debug.core.content.KeyBindingHelper;
 import com.dyalog.apldev.debug.core.content.StringUtils;
+import com.dyalog.apldev.log.Log;
 
 /**
  * This is the viewer for the console. It's responsible for making sure that
@@ -130,7 +130,7 @@ public class ScriptConsoleViewer extends TextConsoleViewer implements
 							.getClass().getDeclaredMethod("hide");
 					fHideMethod.setAccessible(true);
 				} catch (Exception e) {
-					APLDebugCorePlugin.log(e);
+					Log.log(e);
 				}
 			}
 			return fHideMethod;
@@ -221,7 +221,7 @@ public class ScriptConsoleViewer extends TextConsoleViewer implements
 					}
 				}
 			} catch (Exception e) {
-				APLDebugCorePlugin.log(e);
+				Log.log(e);
 			}
 		}
 		
@@ -526,7 +526,7 @@ public class ScriptConsoleViewer extends TextConsoleViewer implements
 						return;
 					}
 				} catch (BadLocationException e) {
-					APLDebugCorePlugin.log(e);
+					Log.log(e);
 					return;
 				}
 				

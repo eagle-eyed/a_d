@@ -6,9 +6,9 @@ import org.eclipse.jface.text.ITextHover;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.Region;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.console.IScriptConsoleShell;
 import com.dyalog.apldev.debug.core.console.IScriptConsoleViewer;
+import com.dyalog.apldev.log.Log;
 
 public class DefaultScriptConsoleTextHover implements ITextHover {
 
@@ -35,7 +35,7 @@ public class DefaultScriptConsoleTextHover implements ITextHover {
 			
 			return interpreterShell.getDescription(document, cursorPosition);
 		} catch (Exception e) {
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 			return null;
 		}
 	}

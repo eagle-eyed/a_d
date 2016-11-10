@@ -26,7 +26,7 @@ public class AplDevConsole extends ScriptConsole {
 	private IScriptConsoleInterpreter interpreter;
 	
 	public AplDevConsole(String name, ImageDescriptor imageDescriptor,
-			AplDevConsoleInterpreter interpreter) {
+			IScriptConsoleInterpreter interpreter) {
 		super(name, imageDescriptor, interpreter);
 		
 		this.interpreter = interpreter;

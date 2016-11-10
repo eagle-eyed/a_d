@@ -38,11 +38,8 @@ import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 
 import org.eclipse.core.runtime.Assert;
-//import org.python.pydev.shared_core.cache.Cache;
-//import org.python.pydev.shared_core.cache.LRUCache;
-//import org.python.pydev.shared_core.log.Log;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
+import com.dyalog.apldev.log.Log;
 
 
 public final class StringUtils {
@@ -1607,7 +1604,7 @@ public final class StringUtils {
                 CharBuffer parsed = decoder.decode(ByteBuffer.wrap(b, 0, b.length));
                 return parsed.toString();
             } catch (Exception e2) {
-                APLDebugCorePlugin.log(e2);
+                Log.log(e2);
                 //Shouldn't ever happen!
                 return new String("Unable to decode bytearray from Python.");
             }

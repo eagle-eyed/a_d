@@ -11,6 +11,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
+import com.dyalog.apldev.log.Log;
 
 public class ListenConnector implements Runnable {
 
@@ -33,7 +34,7 @@ public class ListenConnector implements Runnable {
 			fPort = localPort;
 			serverSocket.close();
 		} catch (IOException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Error when search free server socket.", e);
+			Log.log(IStatus.ERROR, "Error when search free server socket.", e);
 			throw e;
 		}
 	}
@@ -52,11 +53,11 @@ public class ListenConnector implements Runnable {
 				fClient  = true;
 			} catch (UnknownHostException e1) {
 //				requestFailed("Unable to connect to APL VM", e);
-				APLDebugCorePlugin.log(IStatus.ERROR, "Unable to connect to APL VM", e1);
+				Log.log(IStatus.ERROR, "Unable to connect to APL VM", e1);
 				throw e1;
 			}
 		} catch (IOException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Error when creating server socket.", e);
+			Log.log(IStatus.ERROR, "Error when creating server socket.", e);
 			throw e;
 		}
 	}
@@ -85,7 +86,7 @@ public class ListenConnector implements Runnable {
 			try {
 				serverSocket.close();
 			} catch (IOException e) {
-				APLDebugCorePlugin.log(IStatus.WARNING,
+				Log.log(IStatus.WARNING,
 						"Can't close server socket.", e);
 			} finally {
 				serverSocket = null;
@@ -159,7 +160,7 @@ public class ListenConnector implements Runnable {
 			this.stopListening();
 		} catch (Throwable e) {
 			// Never fail
-			APLDebugCorePlugin.log(IStatus.WARNING,
+			Log.log(IStatus.WARNING,
 					"Error finalizing ListenConnector", e);
 		}
 	}

@@ -11,6 +11,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
+import com.dyalog.apldev.log.Log;
 
 public class ImageCache {
 
@@ -36,7 +37,7 @@ public class ImageCache {
 				image = putOnImageHash(key, image);
 			} catch (Exception e) {
 				// if image is imMissing return default "imMissing" image
-				APLDebugCorePlugin.log(IStatus.ERROR, "Missing image: " + key, e);
+				Log.log(IStatus.ERROR, "Missing image: " + key, e);
 				if (imMissing == null || imMissing.isDisposed()) {
 					desc = ImageDescriptor.getMissingImageDescriptor();
 					imMissing = desc.createImage();
@@ -80,7 +81,7 @@ public class ImageCache {
 					url = new URL(baseURL, key);
 					desc = ImageDescriptor.createFromURL(url);
 				} catch (MalformedURLException e) {
-					APLDebugCorePlugin.log(IStatus.ERROR, "Missing image: " + key, e);
+					Log.log(IStatus.ERROR, "Missing image: " + key, e);
 					desc = ImageDescriptor.getMissingImageDescriptor();
 				}
 				descriptorHash.put(key, desc);

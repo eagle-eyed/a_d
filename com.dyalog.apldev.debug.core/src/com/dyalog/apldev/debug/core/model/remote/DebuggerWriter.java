@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.console.SessionConsole;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
+import com.dyalog.apldev.log.Log;
 
 public class DebuggerWriter implements Runnable {
 
@@ -68,7 +69,7 @@ public class DebuggerWriter implements Runnable {
 			fDebugTarget.getCommandProc().setTreeListRequestReceiver(requestWsTree);
 			postCommand(cmd.toString());
 		} catch (JSONException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Error parsing to JSON: postGetTree (" + node +")", e);
+			Log.log(IStatus.ERROR, "Error parsing to JSON: postGetTree (" + node +")", e);
 			return false;
 		}
 		return true;
@@ -102,7 +103,7 @@ public class DebuggerWriter implements Runnable {
 			fDebugTarget.getCommandProc().setValueTipRequestReceiver(requestValueTip);
 			postCommand(cmd.toString());
 		} catch (JSONException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Error parsing to JSON: postGetValueTip (" + line +")", e);
+			Log.log(IStatus.ERROR, "Error parsing to JSON: postGetValueTip (" + line +")", e);
 			return false;
 		}
 		return true;
@@ -122,7 +123,7 @@ public class DebuggerWriter implements Runnable {
 			fDebugTarget.getCommandProc().setOpenReceiver(requestEdit);
 			postCommand(cmd.toString());
 		} catch (JSONException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Error parsing to JSON: postEdit (.., " + text +")", e);
+			Log.log(IStatus.ERROR, "Error parsing to JSON: postEdit (.., " + text +")", e);
 			return false;
 		}
 		return true;
@@ -140,7 +141,7 @@ public class DebuggerWriter implements Runnable {
 			fDebugTarget.getCommandProc().setSaveReceiver(requestSave);
 			postCommand(cmd.toString());
 		} catch (JSONException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Error parsing to JSON: postSave (.., " + text + ",..)", e);
+			Log.log(IStatus.ERROR, "Error parsing to JSON: postSave (.., " + text + ",..)", e);
 			return false;
 		}
 	return true;
@@ -153,7 +154,7 @@ public class DebuggerWriter implements Runnable {
 			JSONObject val = new JSONObject();
 			cmd.put(1, val);
 		} catch (JSONException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Error parsing to JSON: postClose (" + win + ")", e);
+			Log.log(IStatus.ERROR, "Error parsing to JSON: postClose (" + win + ")", e);
 			return false;
 		}
 		return true;
@@ -228,10 +229,10 @@ public class DebuggerWriter implements Runnable {
 					fConsoles.appendSendRide(cmd,"");
 
 			} catch (IOException e) {
-				APLDebugCorePlugin.log(e);
+				Log.log(e);
 			}
 		} catch (JSONException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Can't parse to JSON array: " + cmd, e);
+			Log.log(IStatus.ERROR, "Can't parse to JSON array: " + cmd, e);
 		}
 		
 	}
@@ -289,7 +290,7 @@ public class DebuggerWriter implements Runnable {
 			} catch (InterruptedException | IOException e) {
 				done = true;
 			} catch (Throwable e1) {
-				APLDebugCorePlugin.log(IStatus.ERROR, "Exception in DebugWriter", e1);
+				Log.log(IStatus.ERROR, "Exception in DebugWriter", e1);
 			}
 			if ((fSocket == null) || !fSocket.isConnected()) {
 				done = true;

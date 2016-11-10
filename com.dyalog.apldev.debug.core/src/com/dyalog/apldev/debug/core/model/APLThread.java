@@ -25,6 +25,7 @@ import org.json.JSONException;
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindow;
 import com.dyalog.apldev.debug.core.model.remote.EntityWindowsStack;
+import com.dyalog.apldev.log.Log;
 
 /**
  * A PDA thread. A PDA VM is single threaded.
@@ -335,7 +336,7 @@ public class APLThread extends APLDebugElement implements IThread,
 		try {
 			frame = (APLStackFrame) getTopStackFrame();
 		} catch (DebugException e) {
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 			return;
 		}
 		if (frame != null) {

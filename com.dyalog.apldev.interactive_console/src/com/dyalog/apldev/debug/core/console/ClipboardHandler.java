@@ -9,7 +9,7 @@ import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
+import com.dyalog.apldev.log.Log;
 
 /**
  * Add text to the clipboard
@@ -107,7 +107,7 @@ public class ClipboardHandler {
 				}
 			}
 		} catch (Exception e) {
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 		}
 		return plainText.toString();
 	}

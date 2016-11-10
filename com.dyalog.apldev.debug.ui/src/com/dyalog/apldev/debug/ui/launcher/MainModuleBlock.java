@@ -34,6 +34,7 @@ import org.eclipse.swt.widgets.Widget;
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.sourcelookup.GetContainers;
 import com.dyalog.apldev.debug.core.sourcelookup.GetFiles;
+import com.dyalog.apldev.log.Log;
 
 public class MainModuleBlock extends AbstractLaunchConfigurationTab {
 
@@ -213,7 +214,7 @@ public class MainModuleBlock extends AbstractLaunchConfigurationTab {
 						}
 					}
 				} catch (CoreException e) {
-					APLDebugCorePlugin.log(e);
+					Log.log(e);
 				}
 			}
 		}

@@ -38,6 +38,7 @@ import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
 import com.dyalog.apldev.debug.core.model.remote.ListenConnector;
 import com.dyalog.apldev.debug.core.model.remote.RemoteDebugger;
+import com.dyalog.apldev.log.Log;
 
 /**
  * Abstract base class for APL launch configuration delegates.
@@ -198,7 +199,7 @@ public class APLLaunchDelegate extends LaunchConfigurationDelegate {
 				}
 				process = launchProcess(commandLine, workingDirectory, envp);
 				if (process == null) {
-					throw new CoreException(APLDebugCorePlugin.makeStatus(IStatus.ERROR,
+					throw new CoreException(Log.makeStatus(IStatus.ERROR,
 						"Could not execute APL interpreter process.", null));
 				}
 			} else if (launchInterpreter & connectSettings) {
@@ -276,7 +277,7 @@ public class APLLaunchDelegate extends LaunchConfigurationDelegate {
 					message = "Timed out after " + Float.toString(config.acceptTimeout / 1000)
 							+ " seconds while waiting for interpreter to connect.";
 				}
-				throw new CoreException (APLDebugCorePlugin.makeStatus(IStatus.ERROR, message, e));
+				throw new CoreException (Log.makeStatus(IStatus.ERROR, message, e));
 			}
 //			launch.setSourceLocator();
 			
@@ -288,7 +289,7 @@ public class APLLaunchDelegate extends LaunchConfigurationDelegate {
 			subMonitor.done();
 
 		} catch (IOException e) {
-			throw new CoreException(APLDebugCorePlugin.makeStatus(IStatus.ERROR,
+			throw new CoreException(Log.makeStatus(IStatus.ERROR,
 					"Unexpected IO Exception during launching APL application", null));
 		}
 	}
@@ -329,7 +330,7 @@ public class APLLaunchDelegate extends LaunchConfigurationDelegate {
 		 */
 //		process = DebugPlugin.exec(commandLine, workingDirectory, envp);
 		} catch (IOException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Can't launch interpreter process", e);
+			Log.log(IStatus.ERROR, "Can't launch interpreter process", e);
 		}
 		return process;
 	}

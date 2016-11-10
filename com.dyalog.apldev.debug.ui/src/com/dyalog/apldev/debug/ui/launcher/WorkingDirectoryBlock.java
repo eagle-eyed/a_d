@@ -31,6 +31,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
+import com.dyalog.apldev.log.Log;
 
 public class WorkingDirectoryBlock extends AbstractLaunchConfigurationTab {
 
@@ -197,7 +198,7 @@ public class WorkingDirectoryBlock extends AbstractLaunchConfigurationTab {
                 }
                 IPath uriPath = new Path(path).makeAbsolute();
             } catch (CoreException e) {
-                APLDebugCorePlugin.log(e);
+                Log.log(e);
             }
             if (res instanceof IContainer) {
                 return (IContainer) res;
@@ -314,7 +315,7 @@ public class WorkingDirectoryBlock extends AbstractLaunchConfigurationTab {
             }
         } catch (CoreException e) {
             setErrorMessage("Exception occurred reading configuration" + e.getStatus().getMessage());
-            APLDebugCorePlugin.log(e);
+            Log.log(e);
         }
     }
 

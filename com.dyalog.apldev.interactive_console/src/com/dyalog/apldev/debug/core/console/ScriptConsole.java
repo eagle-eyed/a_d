@@ -26,12 +26,12 @@ public abstract class ScriptConsole extends TextConsole implements ICommandHandl
 	protected ScriptConsoleSession session;
 	protected ScriptConsolePartitioner fPartitioner;
 	private WeakReference<ScriptConsoleViewer> viewer;
-	private AplDevConsoleInterpreter interpreter;
+	private IScriptConsoleInterpreter interpreter;
 	private boolean fTerminated;
 	
 	
 	public ScriptConsole(String name, ImageDescriptor imageDescriptor,
-			AplDevConsoleInterpreter interpreter) {
+			IScriptConsoleInterpreter interpreter) {
 		super(name, "org.dyalog.APLDev.debug.console", imageDescriptor, true);
 		
 		this.interpreter = interpreter;

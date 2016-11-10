@@ -30,6 +30,7 @@ import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.ui.APLDebugUIPlugin;
+import com.dyalog.apldev.log.Log;
 /**
  * Control for selection a Apl project
  */
@@ -80,7 +81,7 @@ public class ProjectBlock extends AbstractLaunchConfigurationTab {
 							aplProjects.add(project);
 						}
 					} catch (CoreException ex) {
-						APLDebugCorePlugin.log(ex);
+						Log.log(ex);
 					}
 				}
 				projects = aplProjects.toArray(new IProject[aplProjects.size()]);

@@ -16,7 +16,7 @@ import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.keys.IBindingService;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
+import com.dyalog.apldev.log.Log;
 
 /**
  * Helper for knowing about keybingings and related actions
@@ -144,7 +144,7 @@ public class KeyBindingHelper {
 		try {
 			handlerService.executeCommand(commandId, null);
 		} catch (Exception e) {
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 		}
 	}
 }

@@ -14,6 +14,7 @@ import org.eclipse.debug.core.DebugPlugin;
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.console.SessionConsole;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
+import com.dyalog.apldev.log.Log;
 
 public class DebuggerReader implements Runnable {
 	private Socket fSocket;
@@ -104,7 +105,7 @@ public class DebuggerReader implements Runnable {
 			} catch (IOException e2) {
 				if (!e2.getMessage().equals("Done") 
 						& !e2.getMessage().equals("Can't read socket"))
-					APLDebugCorePlugin.log(e2);
+					Log.log(e2);
 				done = true;
 			} catch (Exception e) {
 				System.err.println(e);

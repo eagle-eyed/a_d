@@ -30,8 +30,10 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
+import com.dyalog.apldev.ApldevPlugin;
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.ui.APLDebugUIPlugin;
+import com.dyalog.apldev.log.Log;
 
 public class InterpreterTab extends AbstractLaunchConfigurationTab {
 
@@ -364,11 +366,11 @@ public class InterpreterTab extends AbstractLaunchConfigurationTab {
 			fPortText.setText(configuration.getAttribute(APLDebugCorePlugin.ATTR_INTERPRETER_PORT, "4502"));
 			handleLaunchButtonSelected();
 			handleConnectButtonSelected();
-			fRideButton.setSelection(configuration.getAttribute(APLDebugCorePlugin.ATTR_SHOW_RIDE, false));
+			fRideButton.setSelection(configuration.getAttribute(ApldevPlugin.ATTR_SHOW_RIDE, false));
 		} catch (CoreException e) {
 			setErrorMessage("Exception occurred reading configuration:"
 					+ e.getStatus().getMessage());
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 		}
 	}
 
@@ -382,7 +384,7 @@ public class InterpreterTab extends AbstractLaunchConfigurationTab {
 		configuration.setAttribute(APLDebugCorePlugin.ATTR_PROGRAM_ARGUMENTS, 
 				getAttributeValueFrom(fPrgmArgumentsText));
 		fWorkingDirectoryBlock.performApply(configuration);
-		configuration.setAttribute(APLDebugCorePlugin.ATTR_SHOW_RIDE, fRideButton.getSelection());
+		configuration.setAttribute(ApldevPlugin.ATTR_SHOW_RIDE, fRideButton.getSelection());
 	}
 
 	/**

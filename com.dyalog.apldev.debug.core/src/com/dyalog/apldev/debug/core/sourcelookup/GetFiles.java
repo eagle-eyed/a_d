@@ -12,6 +12,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
+import com.dyalog.apldev.log.Log;
 
 public class GetFiles {
 	
@@ -53,7 +54,7 @@ public class GetFiles {
 					}
 				}
 			} catch (CoreException e) {
-				APLDebugCorePlugin.log(e);
+				Log.log(e);
 			}
 		}
 		
@@ -108,7 +109,7 @@ public class GetFiles {
 			}
 		} else {
 			if (container instanceof IProject) {
-				APLDebugCorePlugin.logInfo("Info: Project: " + container + " has no associated location.");
+				Log.logInfo("Info: Project: " + container + " has no associated location.");
 			}
 		}
 		return null;

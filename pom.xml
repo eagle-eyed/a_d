@@ -14,6 +14,7 @@
   <modules>
     <module>com.dyalog.apldev.debug.core</module>
     <module>com.dyalog.apldev.debug.ui</module>
+	<module>com.dyalog.apldev.interactive_console</module>
     <module>com.dyalog.apldev.feature</module>
 	<module>com.dyalog.apldev.update</module>
   </modules>

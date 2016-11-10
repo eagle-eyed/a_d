@@ -16,8 +16,6 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
-import com.dyalog.apldev.debug.core.console.prefs.ColorManager;
-
 public class APLDebugCorePlugin extends Plugin {
 	// The shared instance.
 	private static APLDebugCorePlugin plugin;
@@ -65,7 +63,6 @@ public class APLDebugCorePlugin extends Plugin {
 	public static final String ATTR_INTERPRETER_CONNECT = PLUGIN_ID + ".ATTR_INTERPRETER_CONNECT";
 	public static final String FUNCTION_EDITOR_ID = "apl.editor";
 	public static final String ATTR_PROGRAM_ARGUMENTS = PLUGIN_ID + ".PROGRAM_ARGUMENTS";
-	public static final String ATTR_SHOW_RIDE = PLUGIN_ID + ".ATTR_SHOW_RIDE";
 	public static String ATTR_DEFAULT_INTERPRETER_PATH_WIN = "cmd /c start dyalog";
 	public static String ATTR_DEFAULT_INTERPRETER_PATH_LINUX = "xterm -e dyalog";
 	public static String ATTR_DEFAULT_INTERPRETER_PATH_MACOSX = "dyalog";
@@ -90,14 +87,11 @@ public class APLDebugCorePlugin extends Plugin {
 	/**
 	 * This method is called when the plug-in is stoped
 	 */
-//	@Override
+	@Override
 	public void stop(BundleContext context) throws Exception {
 		super.stop(context);
 		plugin = null;
 		resourceBundle = null;
-        ColorManager.getDefault().dispose();
-//        imageCache.dispose();
-
 	}
 	
 	/**
@@ -110,7 +104,6 @@ public class APLDebugCorePlugin extends Plugin {
 		return plugin;
 	}
 	public static String getPluginID() {
-		// Append check if in test mode, else:
 		return getDefault().getBundle().getSymbolicName();
 	}
 	
@@ -154,33 +147,13 @@ public class APLDebugCorePlugin extends Plugin {
 		}
 	}
 	
-	// --
+	
 	public static String getUniqueIdentifier() {
 		APLDebugCorePlugin plugin = getDefault();
 		return plugin != null ? plugin.getBundle().getSymbolicName()
-				: "com.dyalog.apldev.debug.ui";
+				: "com.dyalog.apldev.debug.core";
 	}
 	
-	public static void log(Throwable e) {
-		getDefault().getLog().log(new Status(IStatus.ERROR, getUniqueIdentifier(), 0,
-				"Debug Error", e));
-	}
-
-	public static Status makeStatus(int errorLevel, String message, Throwable e) {
-        return new Status(errorLevel, getPluginID(), errorLevel, message, e);
-    }
-	
-	/**
-	 * 
-	 * @param errorLevel IStatus.[OK|INFO|WARNING|ERROR]
-	 * @param message
-	 * @param e
-	 */
-	public static void log(int errorLevel, String message, Throwable e) {
-		Status s = makeStatus(errorLevel, message, e);
-		getDefault().getLog().log(s);
-	}
-
 	/**
 	* Returns an image descriptor for the image file at the given
 	* plug-in relative path.
@@ -192,12 +165,5 @@ public class APLDebugCorePlugin extends Plugin {
 		return AbstractUIPlugin.imageDescriptorFromPlugin(getUniqueIdentifier(), path);
 	}
 
-	public static void logInfo(String message) {
-		log(IStatus.INFO, message, new RuntimeException(message));
-	}
-	
-	public static void logInfo(String message, Throwable e) {
-		log(IStatus.INFO, message, e);
-	}
 
 }

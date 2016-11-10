@@ -7,7 +7,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
+import com.dyalog.apldev.log.Log;
 
 public class ScriptConsoleHistory {
 
@@ -105,7 +105,7 @@ public class ScriptConsoleHistory {
 		try {
 			historyAsDoc.replace(historyAsDoc.getLength(), 0, lineToAddToHistory + "\n");
 		} catch (BadLocationException e) {
-			APLDebugCorePlugin.log(e);
+			Log.log(e);
 		}
 		
 		if (lineToAddToHistory.length() == 0) {

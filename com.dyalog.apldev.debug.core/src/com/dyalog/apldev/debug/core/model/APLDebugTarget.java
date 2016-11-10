@@ -67,6 +67,7 @@ import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.breakpoints.APLLineBreakpoint;
 import com.dyalog.apldev.debug.core.breakpoints.APLRunToLineBreakpoint;
 import com.dyalog.apldev.debug.core.console.AplDevConsoleInterpreter;
+import com.dyalog.apldev.debug.core.console.IScriptConsoleInterpreter;
 import com.dyalog.apldev.debug.core.console.SessionConsole;
 import com.dyalog.apldev.debug.core.model.remote.CommandProcessing;
 import com.dyalog.apldev.debug.core.model.remote.DebuggerReader;
@@ -84,6 +85,7 @@ import com.dyalog.apldev.debug.core.model.remote.WorkspaceEditorInput;
 import com.dyalog.apldev.debug.core.protocol.APLEvent;
 import com.dyalog.apldev.debug.core.protocol.CIPEvent;
 import com.dyalog.apldev.debug.core.protocol.FocusEvent;
+import com.dyalog.apldev.log.Log;
 
 /**
  * APL Debug Target
@@ -159,7 +161,7 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 
 	private CommandProcessing fCommandProc;
 
-	private AplDevConsoleInterpreter consoleInterpreter;
+//	private AplDevConsoleInterpreter consoleInterpreter;
 
 	/**
 	 * Displayed nodeId in WS Explorer;
@@ -502,9 +504,10 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 	public void addSessionConsole() {
 		if (fConsoles == null) {
 			try {
-				fConsoles = new SessionConsole(this);
+				IScriptConsoleInterpreter consoleInterpreter = new AplDevConsoleInterpreter(this);
+				fConsoles = new SessionConsole(consoleInterpreter);
 			} catch (DebugException e) {
-				APLDebugCorePlugin.log(IStatus.ERROR, "Error when creating console", e);
+				Log.log(IStatus.ERROR, "Error when creating console", e);
 			}
 		}
 		// Currently interpreter don't work properly with eclipse process console
@@ -938,7 +941,7 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 			} catch (IOException e) {
 	
 			} catch (CoreException e) {
-				APLDebugCorePlugin.log(e);
+				Log.log(e);
 			}
 		}
 	}
@@ -1178,7 +1181,7 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 				return theValues;
 			}
 		} catch (JSONException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Field not present " + data.toString(), e);
+			Log.log(IStatus.ERROR, "Field not present " + data.toString(), e);
 		}
 		return new IValue[0];
 	}
@@ -1289,7 +1292,7 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 				}
 			}
 		} catch (JSONException e) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Field not present " + data.toString(), e);
+			Log.log(IStatus.ERROR, "Field not present " + data.toString(), e);
 //			fGlobalVariables = new IVariable[0];
 			return;
 		}
@@ -1637,8 +1640,8 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 		this.fWriter = new DebuggerWriter(socket, this);
 		this.fCommandProc = new CommandProcessing(fWriter, this);
 		this.fReader = new DebuggerReader(socket, this);
-		this.consoleInterpreter.setDebuggerWriter(fWriter);
-		this.consoleInterpreter.setCommandsProcessing(fCommandProc);
+//		this.consoleInterpreter.setDebuggerWriter(fWriter);
+//		this.consoleInterpreter.setCommandsProcessing(fCommandProc);
 		Thread t; 
 		t = new Thread(fReader, "apl.reader");
 		t.start();
@@ -1685,9 +1688,9 @@ public class APLDebugTarget extends APLDebugElement implements IDebugTarget,
 //		
 //	}
 
-	public void setConsoleInterpter(AplDevConsoleInterpreter consoleInterpreter) {
-		this.consoleInterpreter = consoleInterpreter;
-	}
+//	public void setConsoleInterpter(AplDevConsoleInterpreter consoleInterpreter) {
+//		this.consoleInterpreter = consoleInterpreter;
+//	}
 	
 	public EntityWindowsStack getEntityWindows() {
 		return entityWindowsStack;

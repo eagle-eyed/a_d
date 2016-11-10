@@ -1,5 +1,7 @@
 package com.dyalog.apldev.debug.core.console;
 
+import org.eclipse.debug.core.model.IProcess;
+
 import com.dyalog.apldev.debug.core.content.Tuple;
 
 public interface IScriptConsoleInterpreter extends IScriptConsoleShell, IConsoleRequest {
@@ -14,5 +16,15 @@ public interface IScriptConsoleInterpreter extends IScriptConsoleShell, IConsole
 
 	void edit(String text, int pos);
 	
+	String getName();
 	
+	boolean isRIDEConsole();
+	
+	void postRIDECommand(String input);
+	
+	void postSessionPrompt(String input);
+	
+	IProcess getProcess();
+	
+	boolean isTerminated();
 }

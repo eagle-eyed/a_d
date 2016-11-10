@@ -10,7 +10,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
+import com.dyalog.apldev.log.Log;
 
 /**
  * Generic color manager
@@ -37,7 +37,7 @@ public class ColorManager {
 	public Color getColor(RGB rgb) {
 		Display current = Display.getCurrent();
 		if (current == null) {
-			APLDebugCorePlugin.log(IStatus.ERROR, "Can't get color in non-ui thread", null);
+			Log.log(IStatus.ERROR, "Can't get color in non-ui thread", null);
 		}
 		Color color = fColorTable.get(rgb);
 		if (color == null) {

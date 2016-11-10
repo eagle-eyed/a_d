@@ -6,9 +6,9 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.ui.PlatformUI;
 
-import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.content.StringUtils;
 import com.dyalog.apldev.debug.core.content.Tuple;
+import com.dyalog.apldev.log.Log;
 
 public class AplBackspace extends AplAction {
 
@@ -155,7 +155,7 @@ public class AplBackspace extends AplAction {
 		} catch (Throwable x) {
 			// workbench has still not been created
 		}
-		APLDebugCorePlugin.log(e);
+		Log.log(e);
 	}
 
 	private void eraseToIndentation(AplSelection ps, String lineContentsToCursor)
