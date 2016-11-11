@@ -17,7 +17,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui.workbench,
  org.eclipse.ui.browser;bundle-version="3.4.300",
  org.eclipse.ui.ide;bundle-version="3.12.0",
- com.dyalog.apldev.interactive_console;bundle-version="0.1.0",
+ com.dyalog.apldev.interactive_console,
  com.dyalog.apldev
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

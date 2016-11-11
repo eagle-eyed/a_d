@@ -67,8 +67,6 @@ import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
 import com.dyalog.apldev.debug.core.breakpoints.APLLineBreakpoint;
 import com.dyalog.apldev.debug.core.breakpoints.APLRunToLineBreakpoint;
 import com.dyalog.apldev.debug.core.console.AplDevConsoleInterpreter;
-import com.dyalog.apldev.debug.core.console.IScriptConsoleInterpreter;
-import com.dyalog.apldev.debug.core.console.SessionConsole;
 import com.dyalog.apldev.debug.core.model.remote.CommandProcessing;
 import com.dyalog.apldev.debug.core.model.remote.DebuggerReader;
 import com.dyalog.apldev.debug.core.model.remote.DebuggerWriter;
@@ -85,6 +83,8 @@ import com.dyalog.apldev.debug.core.model.remote.WorkspaceEditorInput;
 import com.dyalog.apldev.debug.core.protocol.APLEvent;
 import com.dyalog.apldev.debug.core.protocol.CIPEvent;
 import com.dyalog.apldev.debug.core.protocol.FocusEvent;
+import com.dyalog.apldev.interactive_console.console.IScriptConsoleInterpreter;
+import com.dyalog.apldev.interactive_console.console.SessionConsole;
 import com.dyalog.apldev.log.Log;
 
 /**

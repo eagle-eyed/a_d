@@ -7,7 +7,7 @@ import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
-import com.dyalog.apldev.debug.core.console.prefs.ColorManager;
+import com.dyalog.apldev.interactive_console.console.prefs.ColorManager;
 
 /**
  * The activator class controls the plug-in life cycle

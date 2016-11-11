@@ -12,6 +12,7 @@
     <eclipse>http://download.eclipse.org/releases/neon</eclipse>
   </properties>
   <modules>
+	<module>com.dyalog.apldev</module>
     <module>com.dyalog.apldev.debug.core</module>
     <module>com.dyalog.apldev.debug.ui</module>
 	<module>com.dyalog.apldev.interactive_console</module>

@@ -15,8 +15,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
-import com.dyalog.apldev.debug.core.console.SessionConsole;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
+import com.dyalog.apldev.interactive_console.console.SessionConsole;
 import com.dyalog.apldev.log.Log;
 
 public class DebuggerWriter implements Runnable {

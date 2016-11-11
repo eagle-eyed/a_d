@@ -14,5 +14,5 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.workbench.texteditor
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Export-Package: com.dyalog.apldev.debug.core.console,
- com.dyalog.apldev.debug.core.content
+Export-Package: com.dyalog.apldev.interactive_console.console,
+ com.dyalog.apldev.interactive_console.content

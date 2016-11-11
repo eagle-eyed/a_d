@@ -15,13 +15,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.dyalog.apldev.debug.core.APLDebugCorePlugin;
-import com.dyalog.apldev.debug.core.console.ICallback;
-import com.dyalog.apldev.debug.core.console.InterpreterResponse;
-import com.dyalog.apldev.debug.core.console.SessionConsole;
-import com.dyalog.apldev.debug.core.content.Tuple;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
 import com.dyalog.apldev.debug.core.protocol.APLEvent;
 import com.dyalog.apldev.debug.core.protocol.CIPEvent;
+import com.dyalog.apldev.interactive_console.console.ICallback;
+import com.dyalog.apldev.interactive_console.console.InterpreterResponse;
+import com.dyalog.apldev.interactive_console.console.SessionConsole;
+import com.dyalog.apldev.interactive_console.content.Tuple;
 import com.dyalog.apldev.log.Log;
 
 public class CommandProcessing implements Runnable {

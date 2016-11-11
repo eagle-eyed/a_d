@@ -7,13 +7,15 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
-import org.eclipse.ui.handlers.IHandlerService;
 
 import com.dyalog.apldev.ApldevPlugin;
-import com.dyalog.apldev.debug.core.content.Tuple;
 import com.dyalog.apldev.debug.core.model.APLDebugTarget;
-import com.dyalog.apldev.debug.core.model.remote.CommandProcessing;
-import com.dyalog.apldev.debug.core.model.remote.DebuggerWriter;
+import com.dyalog.apldev.interactive_console.console.ICallback;
+import com.dyalog.apldev.interactive_console.console.IScriptConsoleCommunication;
+import com.dyalog.apldev.interactive_console.console.IScriptConsoleInterpreter;
+import com.dyalog.apldev.interactive_console.console.IScriptConsoleViewer;
+import com.dyalog.apldev.interactive_console.console.InterpreterResponse;
+import com.dyalog.apldev.interactive_console.content.Tuple;
 
 public class AplDevConsoleInterpreter implements IScriptConsoleInterpreter {
 
