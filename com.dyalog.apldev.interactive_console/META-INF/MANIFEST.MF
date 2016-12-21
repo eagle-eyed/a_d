@@ -7,11 +7,12 @@ Bundle-Activator: com.dyalog.apldev.interactive_console.InteractiveConsolePlugin
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.jface.text;bundle-version="3.11.0",
- org.eclipse.debug.ui,
  org.eclipse.ui.console,
  org.eclipse.ui.ide,
  com.dyalog.apldev,
- org.eclipse.ui.workbench.texteditor
+ org.eclipse.ui.workbench.texteditor,
+ org.eclipse.debug.core,
+ org.eclipse.debug.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Export-Package: com.dyalog.apldev.interactive_console.console,

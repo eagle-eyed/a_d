@@ -171,16 +171,31 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
+            categoryId="com.dyalog.apldev.debug.ui.category"
             description="Skip current line"
             id="com.dyalog.apldev.debug.ui.command.skipcurline"
-            name="skipcurline">
+            name="Skip current line">
       </command>
+      <command
+            categoryId="com.dyalog.apldev.debug.ui.category"
+            description="Go back one line"
+            id="com.dyalog.apldev.debug.ui.command.goback"
+            name="Go back one line">
+      </command>
+      <category
+            id="com.dyalog.apldev.debug.ui.category"
+            name="APLDev debug">
+      </category>
    </extension>
    <extension
          point="org.eclipse.ui.handlers">
       <handler
             class="com.dyalog.apldev.debug.ui.actions.SkipCurLine"
             commandId="com.dyalog.apldev.debug.ui.command.skipcurline">
+      </handler>
+      <handler
+            class="com.dyalog.apldev.debug.ui.actions.Goback"
+            commandId="com.dyalog.apldev.debug.ui.command.goback">
       </handler>
    </extension>
    <extension
@@ -189,22 +204,38 @@
             allPopups="false"
             locationURI="toolbar:org.eclipse.debug.ui.main.toolbar?after=stepOverGroup">
          <command
-               commandId="com.dyalog.apldev.debug.ui.command.skipcurline"
+               commandId="com.dyalog.apldev.debug.ui.command.goback"
                disabledIcon="icons/dlcl16/gobackoneline_co.png"
                hoverIcon="icons/elcl16/gobackoneline_co.png"
                icon="icons/elcl16/gobackoneline_co.png"
-               label="Go back"
-               style="push"
-               tooltip="Go back one line">
+               style="push">
          </command>
          <command
                commandId="com.dyalog.apldev.debug.ui.command.skipcurline"
                disabledIcon="icons/dlcl16/skipcurline_co.png"
                hoverIcon="icons/elcl16/skipcurline_co.png"
                icon="icons/elcl16/skipcurline_co.png"
-               label="Skip"
-               style="push"
-               tooltip="Skip current line">
+               style="push">
+         </command>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="menu:org.eclipse.ui.run?after=stepOverGroup">
+         <command
+               commandId="com.dyalog.apldev.debug.ui.command.goback"
+               disabledIcon="icons/dlcl16/gobackoneline_co.gif"
+               hoverIcon="icons/elcl16/gobackoneline_co.gif"
+               icon="icons/elcl16/gobackoneline_co.gif"
+               label="Go Back"
+               style="push">
+         </command>
+         <command
+               commandId="com.dyalog.apldev.debug.ui.command.skipcurline"
+               disabledIcon="icons/dlcl16/skipcurline_co.gif"
+               hoverIcon="icons/elcl16/skipcurline_co.gif"
+               icon="icons/elcl16/skipcurline_co.gif"
+               label="Skip current line"
+               style="push">
          </command>
       </menuContribution>
    </extension>

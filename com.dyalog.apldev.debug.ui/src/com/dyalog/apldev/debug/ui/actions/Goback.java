@@ -7,7 +7,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.handlers.HandlerUtil;
 
-public class SkipCurLine extends AbstractHandler {
+public class Goback extends AbstractHandler {
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -15,7 +15,7 @@ public class SkipCurLine extends AbstractHandler {
 		MessageDialog.openInformation(
 				window.getShell(),
 				"APLDev",
-				"Skip current line");
+				"Go back one line");
 		return null;
 	}
 

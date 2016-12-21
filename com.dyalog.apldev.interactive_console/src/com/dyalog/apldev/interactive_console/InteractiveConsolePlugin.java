@@ -62,7 +62,7 @@ public class InteractiveConsolePlugin extends AbstractUIPlugin {
 	/* Images for the console */
 	private static final String[][] IMAGES = new String[][] {
 		{ "icons/cubeR.ico", InteractiveConsolePlugin.RIDE_CONSOLE_ICON },
-		{ "icons/session.gif", InteractiveConsolePlugin.CONSOLE_ICON },
+		{ "icons/cubeS.ico", InteractiveConsolePlugin.CONSOLE_ICON },
 		{ "icons/interrupt.gif", InteractiveConsolePlugin.INTERRUPT_ICON },
 		{ "icons/terminate.gif", InteractiveConsolePlugin.TERMINATE },
 	};
